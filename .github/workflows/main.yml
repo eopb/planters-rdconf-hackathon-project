@@ -17,7 +17,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2020-07-29
+          toolchain: nightly-2020-07-27
           default: true
           components: rustfmt
 
@@ -26,7 +26,7 @@ jobs:
         with:
           profile: minimal
           default: true
-          toolchain: nightly-2020-07-29
+          toolchain: nightly-2020-07-27
 
       - name: Install cargo-make
         uses: davidB/rust-cargo-make@v1
