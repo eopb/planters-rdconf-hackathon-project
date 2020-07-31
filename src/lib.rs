@@ -9,6 +9,7 @@ use seed_style::{pc, *};
 
 mod app;
 mod global_styles;
+mod rhythm;
 
 //
 //  Model, Msg, Update, init(), and start()
