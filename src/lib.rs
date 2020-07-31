@@ -5,7 +5,7 @@ use web_sys::OscillatorType;
 use web_sys::{GainNode, OscillatorNode};
 
 use seed_style::px; // almost always want seed-style px instead of seed px
-use seed_style::*;
+use seed_style::{pc, *};
 
 mod app;
 mod sound;
@@ -76,9 +76,19 @@ pub fn start() {
 //  ---------------
 pub fn view(model: &Model) -> Node<Msg> {
     div![
-        s().display_flex().flex_direction_row(),
-        div![s().width(px(200)).flex_none(), "Hello World"],
-        button!["start", input_ev(Ev::Click, |_| Msg::ProduceSound)],
-        button!["stop", input_ev(Ev::Click, |_| Msg::StopSound)]
+        s().display_grid()
+            .grid_template_rows("auto 300px")
+            .height(pc(100))
+            .width(pc(100)),
+        div![
+            "hello world",
+            // Where to put the canvas
+        ],
+        div![
+            s().display_flex().flex_direction_row(),
+            div![s().width(px(200)).flex_none(), "Hello World"],
+            button!["start", input_ev(Ev::Click, |_| Msg::ProduceSound)],
+            button!["stop", input_ev(Ev::Click, |_| Msg::StopSound)]
+        ]
     ]
 }
