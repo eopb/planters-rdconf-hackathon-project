@@ -1,0 +1,10 @@
+/target
+**/*.rs.bk
+Cargo.lock
+
+# Pycharm
+/.idea
+
+/pkg
+wasm-pack.log
+.DS_Store
