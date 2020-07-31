@@ -10,6 +10,7 @@ mod app;
 mod global_styles;
 mod sound;
 use sound::{Sound, SoundBuilder};
+mod rhythm;
 
 //
 //  Model, Msg, Update, init(), and start()
