@@ -2,6 +2,7 @@ use seed::prelude::*;
 use seed::*;
 use web_sys::AudioContext;
 use web_sys::OscillatorType;
+use web_sys::{GainNode, OscillatorNode};
 
 use seed_style::px; // almost always want seed-style px instead of seed px
 use seed_style::*;
@@ -14,7 +15,8 @@ mod global_styles;
 //  ---------------------------------------
 
 pub struct Model {
-    //oscillator: OscillatorNode,
+    oscillator: OscillatorNode,
+    gain: GainNode,
 }
 
 // In aps that make use of conditional rendering on breakpoints we We just need one Msg
@@ -22,38 +24,43 @@ pub struct Model {
 #[derive(Clone, Debug)]
 pub enum Msg {
     ProduceSound,
+    StopSound,
 }
 
-fn update(msg: Msg, _model: &mut Model, _orders: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
     log!(msg);
 
     match msg {
         Msg::ProduceSound => {
-            make_a_sound().unwrap();
+            model.gain.gain().set_value(11.);
+            //model.oscillator.start().unwrap();
+        }
+        Msg::StopSound => {
+            model.gain.gain().set_value(0.);
+            //model.oscillator.stop().unwrap();
         }
     }
 }
 
-fn make_a_sound() -> Result<(), JsValue> {
+fn make_a_oscillator(freq: f32) -> Result<(OscillatorNode, GainNode), JsValue> {
     let audio_context = AudioContext::new()?;
 
     let oscillator = audio_context.create_oscillator()?;
     oscillator.set_type(OscillatorType::Sine);
-    oscillator.frequency().set_value(840.);
+    oscillator.frequency().set_value(freq);
 
     let gain = audio_context.create_gain()?;
     oscillator.connect_with_audio_node(&gain)?;
+    gain.gain().set_value(0.);
     gain.connect_with_audio_node(&audio_context.destination())?;
-
     oscillator.start()?;
-    Ok(())
+    Ok((oscillator, gain))
 }
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
-    orders.send_msg(Msg::ProduceSound);
-
     global_styles::global_init();
-    Model {}
+    let (oscillator, gain) = make_a_oscillator(440.).unwrap();
+    Model { oscillator, gain }
 }
 
 #[wasm_bindgen(start)]
@@ -70,5 +77,7 @@ pub fn view(model: &Model) -> Node<Msg> {
     div![
         s().display_flex().flex_direction_row(),
         div![s().width(px(200)).flex_none(), "Hello World"],
+        button!["start", input_ev(Ev::Click, |_| Msg::ProduceSound)],
+        button!["stop", input_ev(Ev::Click, |_| Msg::StopSound)]
     ]
 }
