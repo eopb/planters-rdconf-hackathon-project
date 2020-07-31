@@ -70,10 +70,37 @@ pub fn view(model: &Model) -> Node<Msg> {
             // Where to put the canvas
         ],
         div![
-            s().display_flex().flex_direction_row(),
-            div![s().width(px(200)).flex_none(), "Hello World"],
-            button!["start", input_ev(Ev::Click, |_| Msg::ProduceSound)],
-            button!["stop", input_ev(Ev::Click, |_| Msg::StopSound)]
+            s().display_grid().grid_template_columns("200px auto"),
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
         ]
     ]
 }
