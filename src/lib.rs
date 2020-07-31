@@ -8,6 +8,7 @@ use seed_style::px; // almost always want seed-style px instead of seed px
 use seed_style::*;
 
 mod app;
+mod sound;
 mod global_styles;
 
 //
