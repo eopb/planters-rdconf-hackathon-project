@@ -29,8 +29,8 @@ impl SoundBuilder {
     pub fn new() -> Self {
         SoundBuilder {
             osc_type: OscillatorType::Sine,
-            freq: 0.0,
-            gain: 0.0,
+            freq: 440.0,
+            gain: 0.3,
         }
     }
 
