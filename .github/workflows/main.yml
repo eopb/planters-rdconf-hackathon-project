@@ -1,0 +1,46 @@
+name: Main
+
+on: [push, pull_request]
+
+env:
+  RUST_BACKTRACE: 1
+
+jobs:
+  build_test_deploy:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v1
+
+      - name: Install nightly Rust and rustfmt
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2020-07-29
+          default: true
+          components: rustfmt
+
+      - name: Install Nightly Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          default: true
+          toolchain: nightly-2020-07-29
+
+      - name: Install cargo-make
+        uses: davidB/rust-cargo-make@v1
+
+      - name: Build quickstart
+        run: cargo make build_release
+
+      - name: Install Netlify CLI
+        if: github.ref == 'refs/heads/master'
+        run: sudo npm install netlify-cli -g
+
+      - name: Deploy
+        if: github.ref == 'refs/heads/master'
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_ACCESS_TOKEN: ${{ secrets.NETLIFY_ACCESS_TOKEN }}
+        run: sudo netlify deploy -s $NETLIFY_SITE_ID --auth $NETLIFY_ACCESS_TOKEN -p --dir .
