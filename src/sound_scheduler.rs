@@ -38,9 +38,16 @@ impl Default for SoundScheduler {
 impl SoundScheduler {
     // insert sound in order
 
-    pub fn init_with_rhythm(&mut self, rs: &Vec<Rhythm>) {
+    pub fn init_with_rhythm(
+        &mut self,
+        rs: &Vec<(
+            Rhythm,
+            // Where the rhythm is attached to the canvas
+            Option<(f64, f64)>,
+        )>,
+    ) {
         let mut last_beat: Option<&Beat> = None;
-        for (row_idx, r) in rs.iter().enumerate() {
+        for (row_idx, (r, _)) in rs.iter().enumerate() {
             for (pos, beat) in r.0.iter().enumerate() {
                 match (last_beat, beat) {
                     (None, this_beat) => {
