@@ -65,7 +65,6 @@ impl Sound {
     }
 
     pub fn gain(mut self, gain: f32) -> Self {
-        self.gain_node.gain().set_value(gain);
         self.gain = gain;
         self
     }
