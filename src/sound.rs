@@ -1,6 +1,6 @@
+use seed::prelude::JsValue;
 use web_sys::OscillatorType;
 use web_sys::{AudioContext, GainNode, OscillatorNode};
-use seed::prelude::JsValue;
 
 #[derive(Clone, Debug, Default)]
 pub struct Sound {
@@ -90,7 +90,7 @@ impl ToneBuilder {
     pub fn gain(self, gain: f32) -> Self {
         ToneBuilder { gain, ..self }
     }
-    
+
     pub fn build(self) -> Result<Tone, JsValue> {
         let context = AudioContext::new()?;
 
@@ -104,9 +104,9 @@ impl ToneBuilder {
         oscillator.connect_with_audio_node(&gain)?;
         oscillator.start()?;
 
-        Ok(Tone { 
-            oscillator, 
-            gain, 
+        Ok(Tone {
+            oscillator,
+            gain,
             context,
             gain_val: self.gain,
         })

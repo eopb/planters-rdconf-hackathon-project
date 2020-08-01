@@ -1,9 +1,6 @@
+use crate::{Model, Msg};
+use seed::{prelude::*, *};
 
-use crate::{Msg, Model};
-use seed::{*,prelude::*};
-
-pub fn view(_model : &Model)->Node<Msg>{
-    div![
-        "This is the app page"
-    ]
+pub fn view(_model: &Model) -> Node<Msg> {
+    div!["This is the app page"]
 }

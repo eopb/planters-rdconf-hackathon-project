@@ -1,8 +1,8 @@
-use seed::{prelude::*, *};
-use std::rc::Rc;
-use std::cell::RefCell;
-use seed_hooks::*;
 use crate::Msg;
+use seed::{prelude::*, *};
+use seed_hooks::*;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 #[derive(Clone, PartialEq)]
 pub enum LoopStatus {
@@ -18,37 +18,33 @@ impl Default for LoopStatus {
     }
 }
 
-
 // Controlling struct for a deterministic main loop
 // fires Msg::TimeStepAdvanced every timestep.
 #[derive(Clone)]
 pub struct RafLoop {
-    pub last_frame_ts : Option<f64>,
+    pub last_frame_ts: Option<f64>,
     pub timestep: f64, // 60fps
     pub raf_closure: RcMutClosure,
     pub command: Option<RafLoopCommand>,
     pub status: LoopStatus,
 }
 
-impl Default for RafLoop{
-    fn default() -> RafLoop{
-        RafLoop{
-            last_frame_ts : None,
-            timestep: 1000.0/60.0, // 60fps
+impl Default for RafLoop {
+    fn default() -> RafLoop {
+        RafLoop {
+            last_frame_ts: None,
+            timestep: 1000.0 / 60.0, // 60fps
             raf_closure: Rc::new(RefCell::new(None)),
             command: None,
             status: LoopStatus::Stopped,
-            
         }
     }
 }
 
-impl RafLoop{
+impl RafLoop {
     pub fn start(&mut self) -> () {
-    request_animation_frame(
-        self.raf_closure.borrow().as_ref().unwrap(),
-    );
-    self.status = LoopStatus::Running;
+        request_animation_frame(self.raf_closure.borrow().as_ref().unwrap());
+        self.status = LoopStatus::Running;
     }
 
     pub fn stop(&mut self) -> () {
@@ -58,46 +54,47 @@ impl RafLoop{
     }
 }
 
-
-#[derive(Clone,PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum RafLoopCommand {
-    Stop
+    Stop,
 }
 
-
 #[atom]
-pub fn raf_loop_atom() -> Atom<RafLoop>{
+pub fn raf_loop_atom() -> Atom<RafLoop> {
     let raf_loop = RafLoop::default();
 
     let mut delta = 0.0;
     let closure = raf_loop.raf_closure.clone();
-    
-    *closure.borrow_mut() = Some(Closure::wrap(Box::new(move |timestamp| {
-    let  raf_loop = raf_loop_atom().get();
-      
-        
-    if let Some(cmd) = raf_loop.command {
-        if cmd == RafLoopCommand::Stop {
-            raf_loop_atom().update(|e|
-            {
-                e.last_frame_ts = None;
-                e.status = LoopStatus::Stopped;
-                e.command = None;
-            });
-            log!("stopping raf loop");
-            crate::my_app().get().unwrap().update(Msg::TimeStepLoopStopped);
-            return;
-       }
-    }
 
+    *closure.borrow_mut() = Some(Closure::wrap(Box::new(move |timestamp| {
+        let raf_loop = raf_loop_atom().get();
+
+        if let Some(cmd) = raf_loop.command {
+            if cmd == RafLoopCommand::Stop {
+                raf_loop_atom().update(|e| {
+                    e.last_frame_ts = None;
+                    e.status = LoopStatus::Stopped;
+                    e.command = None;
+                });
+                log!("stopping raf loop");
+                crate::my_app()
+                    .get()
+                    .unwrap()
+                    .update(Msg::TimeStepLoopStopped);
+                return;
+            }
+        }
 
         // If possible_last_frame_timestep is none, then this is the first run after a pause.
         // shedule a raf restart and return.
-        if raf_loop.last_frame_ts.is_none (){
+        if raf_loop.last_frame_ts.is_none() {
             raf_loop_atom().update(|e| e.last_frame_ts = Some(timestamp));
-            request_animation_frame( raf_loop.raf_closure.borrow().as_ref().unwrap());
+            request_animation_frame(raf_loop.raf_closure.borrow().as_ref().unwrap());
             log!("restarting due to no last frame data.");
-            crate::my_app().get().unwrap().update(Msg::TimeStepLoopStarted);
+            crate::my_app()
+                .get()
+                .unwrap()
+                .update(Msg::TimeStepLoopStarted);
             return;
             // do setup stuff on first loop of raf loop
         }
@@ -113,11 +110,8 @@ pub fn raf_loop_atom() -> Atom<RafLoop>{
             crate::my_app().get().unwrap().update(Msg::TimeStepAdvanced);
         }
         let closure = raf_loop.raf_closure.clone();
-        request_animation_frame(
-            closure.borrow().as_ref().unwrap(),
-        );
-
-    })   as  Box<dyn FnMut(f64)> ));
+        request_animation_frame(closure.borrow().as_ref().unwrap());
+    }) as Box<dyn FnMut(f64)>));
 
     raf_loop
 }
