@@ -43,6 +43,7 @@ features = [
     'Element',
     'CanvasRenderingContext2d',
     'Document',
+    'Window',
     # "DomTokenList",
     # "AbortController",
     # "AbortSignal",
