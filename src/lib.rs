@@ -9,6 +9,8 @@ use web_sys::{HtmlCanvasElement, HtmlElement};
 mod app;
 mod global_styles;
 mod sound;
+use sound::{Sound, SoundBuilder};
+mod rhythm;
 use sound::{Sound, Tone, ToneBuilder};
 
 mod raf_loop;
@@ -142,6 +144,37 @@ pub fn view(model: &Model) -> Node<Msg> {
             // Where to put the canvas
         ],
         div![
+            s().display_grid().grid_template_columns("200px auto"),
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
+            div![
+                s().background_color("#000"),
+                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            ],
+            div![s().background_color("#F00")],
             s().flex("0 1 100%"),
             play_controls(model),
             schedule_controls(),
