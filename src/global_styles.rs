@@ -8,7 +8,7 @@ pub fn global_init() {
             s().font_family("'Lato',sans-serif")
                 .webkit_font_smoothing_antialiased(),
         )
-        // .style("html", s().box_sizing_border_box())
+        .style("body", s().box_sizing_border_box())
         .style("img", s().box_sizing_content_box())
         .style("*, *:before, *:after", s().box_sizing("inherit"))
         .activate_init_styles();

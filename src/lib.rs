@@ -165,6 +165,7 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             .width(pc(100)),
         div![canvas![
             el_ref(&model.sound_selector),
+            s().width(pc(100)).height(pc(100)),
             style![
                 St::Border => "1px solid black",
             ],
