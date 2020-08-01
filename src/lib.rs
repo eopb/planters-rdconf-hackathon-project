@@ -1,6 +1,5 @@
 use seed::prelude::*;
 use seed::*;
-use web_sys::AudioContext;
 use web_sys::OscillatorType;
 
 use seed_style::px; // almost always want seed-style px instead of seed px
@@ -16,8 +15,7 @@ use sound::{Sound, Tone, ToneBuilder};
 //  ---------------------------------------
 
 pub struct Model {
-    sound: Tone,
-    sounds: Sound,
+    sound: Sound,
 }
 
 // In aps that make use of conditional rendering on breakpoints we We just need one Msg
@@ -28,37 +26,37 @@ pub enum Msg {
     StopSound,
 }
 
-fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     log!(msg);
 
     match msg {
         Msg::ProduceSound => {
-            model.sounds.play();
+            model.sound.play();
         }
         Msg::StopSound => {
-            model.sounds.pause();
+            model.sound.pause();
         }
     }
 }
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     global_styles::global_init();
-    let sound = ToneBuilder::new()
-        .freq(500.)
-        .gain(0.5)
-        .osc_type(OscillatorType::Square)
-        .build()
-        .unwrap();
-    let sound2 = ToneBuilder::new()
-        .freq(1000.)
-        .gain(0.5)
-        .osc_type(OscillatorType::Square)
-        .build()
-        .unwrap();
-    let sounds = Sound::new()
-        .add_tone(sound.clone())
-        .add_tone(sound2);
-    Model { sound, sounds }
+    let sound = Sound::new()
+        .add_tone(
+            ToneBuilder::new()
+                .freq(500.0)
+                .gain(0.5)
+                .build()
+                .unwrap()
+        )
+        .add_tone(
+            ToneBuilder::new()
+                .freq(250.0)
+                .gain(0.5)
+                .build()
+                .unwrap()
+        );
+    Model { sound }
 }
 
 #[wasm_bindgen(start)]
@@ -85,7 +83,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             s().display_flex().flex_direction_row(),
             div![s().width(px(200)).flex_none(), "Hello World"],
             button!["start", input_ev(Ev::Click, |_| Msg::ProduceSound)],
-            button!["stop", input_ev(Ev::Click, |_| Msg::StopSound)]
+            button!["stop", input_ev(Ev::Click, |_| Msg::StopSound)],
         ]
     ]
 }

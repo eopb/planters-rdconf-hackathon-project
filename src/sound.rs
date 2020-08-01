@@ -32,6 +32,12 @@ impl Sound {
             tone.pause();
         }
     }
+
+    pub fn half_gain(&self) {
+        for tone in &self.tones {
+            tone.half_gain();
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -43,12 +49,18 @@ pub struct Tone {
 }
 
 impl Tone {
-    pub fn play(&self) {
+    fn play(&self) {
+        self.context.resume().unwrap(); // Fix for Chromium
         self.gain.gain().set_value(self.gain_val);
     }
 
-    pub fn pause(&self) {
+    fn pause(&self) {
         self.gain.gain().set_value(0.0);
+    }
+
+    fn half_gain(&self) {
+        let val = self.gain.gain().value();
+        self.gain.gain().set_value(val / 2.0);
     }
 }
 
@@ -80,7 +92,6 @@ impl ToneBuilder {
     }
     
     pub fn build(self) -> Result<Tone, JsValue> {
-        // should this be declared here?
         let context = AudioContext::new()?;
 
         let gain = context.create_gain()?;
