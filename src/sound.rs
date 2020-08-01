@@ -49,12 +49,12 @@ pub struct Tone {
 }
 
 impl Tone {
-    fn play(&self) {
+    pub fn play(&self) {
         self.context.resume().unwrap(); // Fix for Chromium
         self.gain.gain().set_value(self.gain_val);
     }
 
-    fn pause(&self) {
+    pub fn pause(&self) {
         self.gain.gain().set_value(0.0);
     }
 

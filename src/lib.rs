@@ -26,7 +26,7 @@ use sound_scheduler::*;
 pub struct Model {
     current_time_step: u64,
     sound_scheduler: SoundScheduler,
-    sound: Sound,
+    sound: Tone,
     canvas: ElRef<HtmlCanvasElement>,
 }
 
@@ -71,7 +71,7 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             let el: HtmlElement = canvas_el.into();
             let freq = ((x - el.offset_left()) as f32 * 11_00. / width) as f32;
             let vol = ((y - el.offset_top()) as f32 * 10. / height) as f32;
-            model.sound = SoundBuilder::new().gain(vol).freq(freq).build().unwrap();
+            model.sound = ToneBuilder::new().gain(vol).freq(freq).build().unwrap();
         }
     }
 }
@@ -82,7 +82,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     let sound = Sound::new()
         .add_tone(ToneBuilder::new().freq(500.0).gain(0.5).build().unwrap())
         .add_tone(ToneBuilder::new().freq(250.0).gain(0.5).build().unwrap());
-    let sound = SoundBuilder::new().freq(500.).build().unwrap();
+    let sound = ToneBuilder::new().freq(500.).build().unwrap();
     Model {
         sound,
         canvas: ElRef::<HtmlCanvasElement>::default(),
