@@ -13,7 +13,7 @@ mod sound;
 use sound::Sound;
 mod rhythm;
 use sound::{Tone, ToneBuilder};
-
+mod testing_ui;
 mod main_loop;
 mod raf_loop;
 mod sound_scheduler;
@@ -49,6 +49,7 @@ pub enum Msg {
     ProduceSound,
     StopSound,
     Click(i32, i32),
+    NoOp,
 }
 fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
     // log!(msg);    // always worth logging the message in development for debug purposes.
@@ -73,11 +74,32 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             let vol = ((y - el.offset_top()) as f32 * 10. / height) as f32;
             model.sound = ToneBuilder::new().gain(vol).freq(freq).build().unwrap();
         }
+        Msg::NoOp => {}
     }
 }
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     global_styles::global_init();
+
+    orders
+    .subscribe(move |subs::UrlChanged(mut url)| {
+        let new_page = match url.remaining_path_parts().as_slice() {
+            ["home"] => Page::MainApp,
+            ["hidden_ui"] => Page::HiddenTestUI,
+            _ =>  Page::MainApp,
+        };
+
+        if current_page().get() != new_page {
+            window().scroll_to_with_x_and_y(0., 0.);
+            current_page().set(new_page);
+        }
+        Msg::NoOp
+        }
+        // 
+    )
+    .notify(subs::UrlChanged(url));
+
+
 
     let sound = Sound::new()
         .add_tone(ToneBuilder::new().freq(500.0).gain(0.5).build().unwrap())
@@ -103,12 +125,32 @@ fn my_app() -> Atom<Option<App<Msg, Model, Node<Msg>>>> {
     None
 }
 
+#[derive(Clone,PartialEq)]
+pub enum Page {
+    MainApp,
+    HiddenTestUI,
+}
+
+#[atom]
+fn current_page() -> Atom<Page> {
+    Page::MainApp
+}
+
 //  View Entry Here, Sets up theme access, two themes are allowed access
 //
 //  The first is the app defined theme, the second provides access to seed style presets.
 //  The content block also activates themed global_styles.
 //  ---------------
 pub fn view(model: &Model) -> Node<Msg> {
+    match current_page().get() {
+        Page::MainApp => app_view(model),
+        Page::HiddenTestUI => testing_ui::view(model)
+    }
+}
+
+
+
+pub fn app_view(model: &Model) -> Node<Msg> {
     raf_loop::raf_loop_atom().get();
 
     div![
