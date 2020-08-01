@@ -79,14 +79,14 @@ impl Sound {
         self.context.resume().unwrap(); // Fix for Chromium
         self.gain_node
             .gain()
-            .set_target_at_time(self.gain, self.context.current_time(), 0.015)
+            .set_target_at_time(self.gain, self.context.current_time(), 0.3)
             .unwrap();
     }
 
     pub fn pause(&self) {
         self.gain_node
             .gain()
-            .set_target_at_time(0.0, self.context.current_time(), 0.015)
+            .set_target_at_time(0.0, self.context.current_time(), 0.3)
             .unwrap();
     }
 }
