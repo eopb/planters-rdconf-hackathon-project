@@ -8,6 +8,8 @@ use seed_style::{pc, *};
 use web_sys::{HtmlCanvasElement, HtmlElement};
 
 mod app;
+mod draw;
+use draw::Draw;
 mod global_styles;
 mod sound;
 use sound::Sound;
@@ -31,8 +33,15 @@ pub struct Model {
     sound_scheduler: SoundScheduler,
     sound: Sound,
     sound_selector: ElRef<HtmlCanvasElement>,
-    beat_bars: Vec<Rhythm>,
     rows: Vec<Row>,
+    beat_bars: Vec<(
+        Rhythm,
+        // Where the rhythm is attached to the canvas
+        Option<(f64, f64)>,
+    )>,
+    /// The row a user has selected.
+    selected_row: usize,
+    mouse_down: bool,
 }
 
 impl Model {
@@ -58,7 +67,12 @@ pub enum Msg {
     StopSound,
     Click(i32, i32),
     NoOp,
+
     ToggleBar(usize, usize),
+    ForceToggleBar(usize, usize),
+    GlobalMouseDown,
+    GlobalMouseUp,
+    SelectRow(usize),
 }
 fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
     // log!(msg);    // always worth logging the message in development for debug purposes.
@@ -74,6 +88,8 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             model.sound.pause();
         }
         Msg::Click(x, y) => {
+            let (_, pos) = model.beat_bars.get_mut(model.selected_row).unwrap();
+
             let canvas_el = model.sound_selector.get().unwrap();
             let width = canvas_el.width() as f32;
             let height = canvas_el.height() as f32;
@@ -82,6 +98,8 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
 
             let relative_pos_x = x - el.offset_left();
             let relative_pos_y = y - el.offset_top();
+
+            *pos = Some((relative_pos_x as f64, relative_pos_y as f64));
 
             log!("new one");
 
@@ -101,20 +119,53 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
                 .dyn_into::<web_sys::CanvasRenderingContext2d>()
                 .unwrap();
 
-            context.fill_rect(relative_pos_x as f64, relative_pos_y as f64, 5., 5.);
-
+            new_canvas_frame(model, canvas_el, context);
             let freq = (relative_pos_x as f32 * 11_00. / width) as f32;
             let vol = (relative_pos_y as f32 * 10. / height) as f32;
 
             model.sound = Sound::default().gain(vol).freq(freq);
         }
         Msg::ToggleBar(row, pos) => {
-            let rhythm: &mut Rhythm = model.beat_bars.get_mut(row).unwrap();
+            if model.mouse_down {
+                let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
+                let beat: &mut Beat = &mut rhythm.0[pos];
+                *beat = beat.toggle();
+                sequencer_controller::bar_toggled(model, row, pos);
+            }
+        }
+        Msg::ForceToggleBar(row, pos) => {
+            log!("force");
+            let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
             let beat: &mut Beat = &mut rhythm.0[pos];
             *beat = beat.toggle();
             sequencer_controller::bar_toggled(model, row, pos);
         }
+        Msg::SelectRow(row) => model.selected_row = row,
         Msg::NoOp => {}
+        Msg::GlobalMouseDown => model.mouse_down = true,
+        Msg::GlobalMouseUp => model.mouse_down = false,
+    }
+}
+
+fn new_canvas_frame(
+    model: &Model,
+    canvas_el: web_sys::HtmlCanvasElement,
+    ctx: web_sys::CanvasRenderingContext2d,
+) {
+    let width = canvas_el.width() as f64;
+    let height = canvas_el.height() as f64;
+
+    ctx.clear_rect(0., 0., width, height);
+
+    for (index, (x, y)) in model
+        .beat_bars
+        .iter()
+        .map(|x| x.1)
+        .enumerate()
+        .flat_map(|(index, pos)| pos.map(|pos| (index, pos)))
+    {
+        ctx.set_fill_style(&JsValue::from_str(row_colour(index)));
+        draw::Rect::crosshair((x, y)).draw(&ctx);
     }
 }
 
@@ -140,7 +191,10 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         .notify(subs::UrlChanged(url));
 
     let sound = Sound::default().gain(0.1).freq(440.0);
-    let default_rhythm = Rhythm::standard().to_vec();
+    let default_rhythm = Rhythm::standard()
+        .into_iter()
+        .map(|rhythm| (*rhythm, None))
+        .collect();
     let mut scheduler = SoundScheduler::default();
     scheduler.init_with_rhythm(&default_rhythm);
     let mut vec_of_rows = (0..=5).map(|idx| Row::new(idx)).collect();
@@ -150,8 +204,10 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         sound_selector: ElRef::<HtmlCanvasElement>::default(),
         beat_bars: default_rhythm,
         current_time_step: 0,
-        sound_scheduler: scheduler,
         rows: vec_of_rows,
+        sound_scheduler: scheduler,
+        selected_row: 0,
+        mouse_down: false,
     }
 }
 
@@ -194,6 +250,8 @@ pub fn app_view(model: &Model) -> Node<Msg> {
     raf_loop::raf_loop_atom().get();
 
     div![
+        ev(Ev::MouseDown, |_| Msg::GlobalMouseDown),
+        ev(Ev::MouseUp, |_| Msg::GlobalMouseUp),
         s().display_grid()
             .grid_template_rows("auto 300px")
             .height(pc(100))
@@ -210,10 +268,11 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             model
                 .beat_bars
                 .iter()
+                .map(|x| &x.0)
                 .enumerate()
                 .map(beat_bar)
                 .collect::<Vec<Node<Msg>>>()
-        ]
+        ],
     ]
 }
 
@@ -225,18 +284,22 @@ fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
             .grid_template_columns("200px auto")
             .height(pc(100)),
         div![
-            s().background_color("#000")
+            s().background_color(row_colour(index))
                 .display_flex()
                 .justify_content_center()
                 .align_items_center(),
-            button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+            button![
+                "Select this rhythm",
+                input_ev(Ev::Click, move |_| Msg::SelectRow(index))
+            ]
         ],
         div![
             s().display_grid()
                 .grid_auto_flow("column")
                 .width(pc(100))
                 .margin_top(px(20))
-                .margin_bottom(px(20)),
+                .margin_bottom(px(20))
+                .user_select("none"),
             bar_data
                 .0
                 .iter()
@@ -257,9 +320,10 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
         };
         div![
             s().background_color(match beat {
-                Beat::Play => "#F00",
+                Beat::Play => row_colour_dark(row),
                 Beat::Pause => "#FFF",
-            }),
+            })
+            .user_select("none"),
             match neighbours {
                 Neighbours {
                     left: true,
@@ -286,7 +350,31 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
                     s().border_radius("1000px")
                 }
             },
-            mouse_ev(Ev::Click, move |_| Msg::ToggleBar(row, index))
+            // mouse_ev(Ev::Click, move |_| Msg::ToggleBar(row, index)),
+            mouse_ev(Ev::MouseOver, move |_| Msg::ToggleBar(row, index)),
+            mouse_ev(Ev::MouseDown, move |_| Msg::ForceToggleBar(row, index)),
         ]
+    }
+}
+
+fn row_colour(index: usize) -> &'static str {
+    match index {
+        1 => "#F00",
+        2 => "#0F0",
+        3 => "#00F",
+        4 => "#FF0",
+        5 => "#F0F",
+        _ => "#0FF",
+    }
+}
+
+fn row_colour_dark(index: usize) -> &'static str {
+    match index {
+        1 => "#800",
+        2 => "#080",
+        3 => "#008",
+        4 => "#880",
+        5 => "#808",
+        _ => "#088",
     }
 }
