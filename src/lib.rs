@@ -62,6 +62,7 @@ pub enum Msg {
     NoOp,
 
     ToggleBar(usize, usize),
+    ForceToggleBar(usize, usize),
     GlobalMouseDown,
     GlobalMouseUp,
     SelectRow(usize),
@@ -118,7 +119,15 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             model.sound = Sound::default().gain(vol).freq(freq);
         }
         Msg::ToggleBar(row, pos) => {
-            let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
+            if model.mouse_down {
+                let rhythm: &mut Rhythm = model.beat_bars.get_mut(row).unwrap();
+                let beat: &mut Beat = &mut rhythm.0[pos];
+                *beat = beat.toggle();
+            }
+        }
+        Msg::ForceToggleBar(row, pos) => {
+            log!("force");
+            let rhythm: &mut Rhythm = model.beat_bars.get_mut(row).unwrap();
             let beat: &mut Beat = &mut rhythm.0[pos];
             *beat = beat.toggle();
         }
@@ -253,7 +262,8 @@ pub fn app_view(model: &Model) -> Node<Msg> {
                 .enumerate()
                 .map(beat_bar)
                 .collect::<Vec<Node<Msg>>>()
-        ]
+        ],
+        div![model.mouse_down.to_string()],
     ]
 }
 
@@ -329,7 +339,8 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
                     s().border_radius("1000px")
                 }
             },
-            input_ev(Ev::MouseDown, move |_| Msg::ToggleBar(row, index))
+            input_ev(Ev::MouseOver, move |_| Msg::ToggleBar(row, index)),
+            input_ev(Ev::MouseDown, move |_| Msg::ForceToggleBar(row, index)),
         ]
     }
 }
