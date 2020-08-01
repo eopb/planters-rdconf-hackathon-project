@@ -128,7 +128,11 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
             let freq = (relative_pos_x as f32 * 11_00. / width) as f32;
             let vol = (relative_pos_y as f32 * 10. / height) as f32;
 
-            model.sound = Sound::default().gain(vol).freq(freq);
+            // model.sound = Sound::default().gain(vol).freq(freq);
+
+            if let Some(selected_row) = model.rows.get_mut(model.selected_row) {
+                selected_row.sound = selected_row.sound.clone().gain(vol).freq(freq);
+            }
         }
         Msg::ToggleBar(row, pos) => {
             if model.mouse_down {
@@ -291,8 +295,20 @@ pub fn app_view(model: &Model) -> Node<Msg> {
         div![
             s().height(pc(100)).display_grid(),
             div![
-                button!["play", ev(Ev::Click, |_| Msg::ProduceSound)],
-                button!["pause", ev(Ev::Click, |_| Msg::StopSound)],
+                button![
+                    "play",
+                    raf_loop::raf_loop_atom().on_click(|raf| raf.start()),
+                ],
+                button![
+                    "pause",
+                    raf_loop::raf_loop_atom().on_click(|raf| raf.stop()),
+                ],
+                p![
+                    "Current Time:",
+                    format!("{:.2}", model.secs_elapsed()),
+                    ", Current Time step:",
+                    model.current_time_step
+                ]
             ],
             model
                 .beat_bars
