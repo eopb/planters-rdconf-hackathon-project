@@ -33,6 +33,7 @@ pub struct Model {
     sound: Tone,
     sound_selector: ElRef<HtmlCanvasElement>,
     beat_bars: Vec<Rhythm>,
+    rows: Vec<Row>,
 }
 
 impl Model {
@@ -56,7 +57,6 @@ pub static TICKS_IN_ONE_BAR: u64 = ((MAIN_LOOP_DURATION / 48.0) * 60.0) as u64;
 // in order to handle a WindowResized event.
 #[derive(Clone, Debug)]
 pub enum Msg {
-    BarToggled(usize, usize),
     TimeStepAdvanced,
     TimeStepLoopStopped,
     TimeStepLoopStarted,
@@ -72,7 +72,6 @@ pub enum Msg {
 fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
     // log!(msg);    // always worth logging the message in development for debug purposes.
     match msg {
-        Msg::BarToggled(row, pos) => sequencer_controller::bar_toggled(model, row, pos),
         Msg::TimeStepAdvanced => main_loop::time_step_advanced(&mut model),
         Msg::TimeStepLoopStopped => main_loop::time_step_loop_stopped(&mut model),
         Msg::TimeStepLoopStarted => main_loop::time_step_loop_started(&mut model),
@@ -122,6 +121,7 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             let rhythm: &mut Rhythm = model.beat_bars.get_mut(row).unwrap();
             let beat: &mut Beat = &mut rhythm.0[pos];
             *beat = beat.toggle();
+            sequencer_controller::bar_toggled(model, row, pos);
         }
         Msg::NoOp => {}
     }
@@ -291,7 +291,7 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
                     s().border_radius("1000px")
                 }
             },
-            input_ev(Ev::Click, move |_| Msg::ToggleBar(row, index))
+            mouse_ev(Ev::Click, move |_| Msg::ToggleBar(row, index))
         ]
     }
 }
