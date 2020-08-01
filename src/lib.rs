@@ -62,8 +62,9 @@ pub enum Msg {
 
     ToggleBar(usize, usize),
     SelectRow(usize),
+    ResizeCanvas,
 }
-fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
+fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
     // log!(msg);    // always worth logging the message in development for debug purposes.
     match msg {
         Msg::TimeStepAdvanced => main_loop::time_step_advanced(&mut model),
@@ -80,6 +81,9 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             let (_, pos) = model.beat_bars.get_mut(model.selected_row).unwrap();
 
             let canvas_el = model.sound_selector.get().unwrap();
+
+            set_canvas_size(&canvas_el);
+
             let width = canvas_el.width() as f32;
             let height = canvas_el.height() as f32;
 
@@ -119,7 +123,14 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             let beat: &mut Beat = &mut rhythm.0[pos];
             *beat = beat.toggle();
         }
+
         Msg::SelectRow(row) => model.selected_row = row,
+        Msg::ResizeCanvas => match &model.sound_selector.get() {
+            Some(x) => set_canvas_size(x),
+            None => {
+                orders.after_next_render(|_| Msg::ResizeCanvas);
+            }
+        },
         Msg::NoOp => {}
     }
 }
@@ -144,6 +155,16 @@ fn new_canvas_frame(
         ctx.set_fill_style(&JsValue::from_str(row_colour(index)));
         draw::Rect::crosshair((x, y)).draw(&ctx);
     }
+}
+fn set_canvas_size(canvas_el: &web_sys::HtmlCanvasElement) {
+    let window = web_sys::window().unwrap();
+
+    let window_height = window.inner_height().unwrap();
+
+    let window_width = window.inner_width().unwrap();
+
+    canvas_el.set_width(window_width.as_f64().unwrap().round() as u32);
+    canvas_el.set_height(window_height.as_f64().unwrap().round() as u32 - 300);
 }
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
@@ -229,9 +250,6 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             .width(pc(100)),
         div![canvas![
             el_ref(&model.sound_selector),
-            style![
-                St::Border => "1px solid black",
-            ],
             mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y()))
         ],],
         div![
