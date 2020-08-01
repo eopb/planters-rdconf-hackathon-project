@@ -46,6 +46,7 @@ impl Sound {
         oscillator.set_type(shape);
         oscillator.frequency().set_value(freq);
         oscillator.connect_with_audio_node(&gain_node)?;
+        oscillator.start()?;
 
         Ok(Self {
             oscillator,

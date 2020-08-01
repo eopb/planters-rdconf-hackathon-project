@@ -134,8 +134,10 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
             if model.mouse_down {
                 let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
                 let beat: &mut Beat = &mut rhythm.0[pos];
-                *beat = model.clicked_beat;
-                sequencer_controller::bar_toggled(model, row, pos);
+                if model.clicked_beat != *beat {
+                    *beat = model.clicked_beat;
+                    sequencer_controller::bar_toggled(model, row, pos);
+                }
             }
         }
         Msg::ForceToggleBar(row, pos) => {
@@ -215,7 +217,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
 
     orders.send_msg(Msg::ResizeCanvas);
 
-    let sound = Sound::default().gain(0.1).freq(440.0);
+    let sound = Sound::default().gain(1.8).freq(440.0);
     let default_rhythm = Rhythm::standard()
         .into_iter()
         .map(|rhythm| (*rhythm, None))
