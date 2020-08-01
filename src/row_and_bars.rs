@@ -3,7 +3,7 @@ use crate::sound::Sound;
 use crate::Model;
 pub struct Row {
     pub row: usize,
-    pub sound: Option<Sound>,
+    pub sound: Sound,
     pub bars: Vec<Bar>,
 }
 
@@ -11,7 +11,7 @@ impl Row {
     pub fn new(row_idx: usize) -> Row {
         Row {
             row: row_idx,
-            sound: None,
+            sound: Sound::default(),
             bars: (0..=47).map(|idx| Bar::new(row_idx, idx)).collect(),
         }
     }
