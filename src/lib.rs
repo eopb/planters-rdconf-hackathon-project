@@ -12,6 +12,7 @@ mod global_styles;
 mod sound;
 use sound::Sound;
 mod rhythm;
+use rhythm::{Beat, Rhythm};
 use sound::{Tone, ToneBuilder};
 mod testing_ui;
 mod main_loop;
@@ -27,7 +28,8 @@ pub struct Model {
     current_time_step: u64,
     sound_scheduler: SoundScheduler,
     sound: Tone,
-    canvas: ElRef<HtmlCanvasElement>,
+    sound_selector: ElRef<HtmlCanvasElement>,
+    beat_bars: Vec<Rhythm>,
 }
 
 impl Model {
@@ -50,6 +52,7 @@ pub enum Msg {
     StopSound,
     Click(i32, i32),
     NoOp,
+    ToggleBar(usize, usize),
 }
 fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
     // log!(msg);    // always worth logging the message in development for debug purposes.
@@ -65,7 +68,7 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             model.sound.pause();
         }
         Msg::Click(x, y) => {
-            let canvas_el = model.canvas.get().unwrap();
+            let canvas_el = model.sound_selector.get().unwrap();
             let width = canvas_el.width() as f32;
             let height = canvas_el.height() as f32;
 
@@ -73,6 +76,11 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             let freq = ((x - el.offset_left()) as f32 * 11_00. / width) as f32;
             let vol = ((y - el.offset_top()) as f32 * 10. / height) as f32;
             model.sound = ToneBuilder::new().gain(vol).freq(freq).build().unwrap();
+        }
+        Msg::ToggleBar(row, pos) => {
+            let rhythm: &mut Rhythm = model.beat_bars.get_mut(row).unwrap();
+            let beat: &mut Beat = &mut rhythm.0[pos];
+            *beat = beat.toggle();
         }
         Msg::NoOp => {}
     }
@@ -107,7 +115,8 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     let sound = ToneBuilder::new().freq(500.).build().unwrap();
     Model {
         sound,
-        canvas: ElRef::<HtmlCanvasElement>::default(),
+        sound_selector: ElRef::<HtmlCanvasElement>::default(),
+        beat_bars: { Rhythm::standard().into() },
         current_time_step: 0,
         sound_scheduler: SoundScheduler::default(),
     }
@@ -160,7 +169,7 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             .width(pc(100)),
         div![
             canvas![
-                el_ref(&model.canvas),
+                el_ref(&model.sound_selector),
                 style![
                     St::Border => "1px solid black",
                 ],
@@ -169,37 +178,46 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             // Where to put the canvas
         ],
         div![
-            s().display_grid().grid_template_columns("200px auto"),
-            div![
-                s().background_color("#000"),
-                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
-            ],
-            div![s().background_color("#F00")],
-            div![
-                s().background_color("#000"),
-                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
-            ],
-            div![s().background_color("#F00")],
-            div![
-                s().background_color("#000"),
-                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
-            ],
-            div![s().background_color("#F00")],
-            div![
-                s().background_color("#000"),
-                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
-            ],
-            div![s().background_color("#F00")],
-            div![
-                s().background_color("#000"),
-                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
-            ],
-            div![s().background_color("#F00")],
-            div![
-                s().background_color("#000"),
-                button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
-            ],
-            div![s().background_color("#F00")],
+            s().height(pc(100)).display_grid(),
+            model
+                .beat_bars
+                .iter()
+                .enumerate()
+                .map(beat_bar)
+                .collect::<Vec<Node<Msg>>>()
         ]
     ]
+}
+
+fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
+    div![
+        s().display_grid()
+            .grid_template_columns("200px auto")
+            .height(pc(100)),
+        div![
+            s().background_color("#000"),
+            button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
+        ],
+        div![
+            s().display_grid().grid_auto_flow("column").width(pc(100)),
+            bar_data
+                .0
+                .iter()
+                .enumerate()
+                .map(beat_bar_box(index))
+                .collect::<Vec<Node<Msg>>>()
+        ],
+    ]
+}
+
+fn beat_bar_box(row: usize) -> impl Fn((usize, &Beat)) -> Node<Msg> {
+    move |(index, beat)| {
+        div![
+            s().background_color(match beat {
+                Beat::Play => "#F00",
+                Beat::Pause => "0F0",
+            }),
+            input_ev(Ev::Click, move |_| Msg::ToggleBar(row, index))
+        ]
+    }
 }
