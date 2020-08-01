@@ -228,20 +228,18 @@ fn current_page() -> Atom<Page> {
 //  The content block also activates themed global_styles.
 //  ---------------
 pub fn view(model: &Model) -> Node<Msg> {
-    div![
-        match current_page().get() {
-            Page::MainApp => app_view(model),
-            Page::HiddenTestUI => testing_ui::view(model),
-        },
-        ev(Ev::MouseDown, |_| Msg::GlobalMouseDown),
-        ev(Ev::MouseUp, |_| Msg::GlobalMouseUp),
-    ]
+    match current_page().get() {
+        Page::MainApp => app_view(model),
+        Page::HiddenTestUI => testing_ui::view(model),
+    }
 }
 
 pub fn app_view(model: &Model) -> Node<Msg> {
     raf_loop::raf_loop_atom().get();
 
     div![
+        ev(Ev::MouseDown, |_| Msg::GlobalMouseDown),
+        ev(Ev::MouseUp, |_| Msg::GlobalMouseUp),
         s().display_grid()
             .grid_template_rows("auto 300px")
             .height(pc(100))
