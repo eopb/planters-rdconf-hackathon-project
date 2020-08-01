@@ -44,8 +44,8 @@ pub enum Msg {
     TimeStepLoopStopped,
     TimeStepLoopStarted,
     Scheduler(SoundSchedulerMsg),
-    WindowResized, // needed for responsive styles
-    NoOp,
+    // WindowResized, // needed for responsive styles
+    // NoOp,
     ProduceSound,
     StopSound,
     Click(i32, i32),
@@ -93,7 +93,14 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    let _app = App::start("app", init, update, view);
+    let app = App::start("app", init, update, view);
+    my_app().set(Some(app));
+}
+
+// Provide access to the app incase one wants to force an update from anywhere in the app
+#[atom]
+fn my_app() -> Atom<Option<App<Msg, Model, Node<Msg>>>> {
+    None
 }
 
 //  View Entry Here, Sets up theme access, two themes are allowed access
