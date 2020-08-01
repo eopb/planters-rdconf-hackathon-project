@@ -40,6 +40,8 @@ features = [
     'OscillatorType',
     'HtmlCanvasElement',
     'Element',
+    'CanvasRenderingContext2d',
+    'Document',
     # "DomTokenList",
     # "AbortController",
     # "AbortSignal",
