@@ -289,7 +289,8 @@ fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
                 .grid_auto_flow("column")
                 .width(pc(100))
                 .margin_top(px(20))
-                .margin_bottom(px(20)),
+                .margin_bottom(px(20))
+                .user_select("none"),
             bar_data
                 .0
                 .iter()
@@ -312,7 +313,8 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
             s().background_color(match beat {
                 Beat::Play => row_colour_dark(row),
                 Beat::Pause => "#FFF",
-            }),
+            })
+            .user_select("none"),
             match neighbours {
                 Neighbours {
                     left: true,
