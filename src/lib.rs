@@ -120,14 +120,14 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
         }
         Msg::ToggleBar(row, pos) => {
             if model.mouse_down {
-                let rhythm: &mut Rhythm = model.beat_bars.get_mut(row).unwrap();
+                let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
                 let beat: &mut Beat = &mut rhythm.0[pos];
                 *beat = beat.toggle();
             }
         }
         Msg::ForceToggleBar(row, pos) => {
             log!("force");
-            let rhythm: &mut Rhythm = model.beat_bars.get_mut(row).unwrap();
+            let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
             let beat: &mut Beat = &mut rhythm.0[pos];
             *beat = beat.toggle();
         }
