@@ -1,5 +1,4 @@
 use seed::prelude::JsValue;
-use seed::*;
 use web_sys::OscillatorType;
 use web_sys::{AudioContext, GainNode, OscillatorNode};
 
@@ -69,7 +68,8 @@ pub struct Tone {
 impl Tone {
     pub fn play(&self) {
         self.context.resume().unwrap(); // Fix for Chromium
-        self.gain.gain()//.set_value(self.gain_val);
+        self.gain
+            .gain() //.set_value(self.gain_val);
             .set_target_at_time(self.gain_val, self.context.current_time(), 0.015)
             .unwrap();
     }
@@ -118,7 +118,7 @@ impl ToneBuilder {
         let context = AudioContext::new()?;
 
         let gain = context.create_gain()?;
-        gain.gain().set_value(0.0001);
+        gain.gain().set_value(0.0);
         gain.connect_with_audio_node(&context.destination())?;
 
         let oscillator = context.create_oscillator()?;
