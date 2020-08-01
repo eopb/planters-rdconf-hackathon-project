@@ -37,6 +37,7 @@ pub struct Model {
     )>,
     /// The row a user has selected.
     selected_row: usize,
+    mouse_down: bool,
 }
 
 impl Model {
@@ -61,6 +62,9 @@ pub enum Msg {
     NoOp,
 
     ToggleBar(usize, usize),
+    ForceToggleBar(usize, usize),
+    GlobalMouseDown,
+    GlobalMouseUp,
     SelectRow(usize),
 }
 fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
@@ -115,12 +119,22 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             model.sound = Sound::default().gain(vol).freq(freq);
         }
         Msg::ToggleBar(row, pos) => {
+            if model.mouse_down {
+                let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
+                let beat: &mut Beat = &mut rhythm.0[pos];
+                *beat = beat.toggle();
+            }
+        }
+        Msg::ForceToggleBar(row, pos) => {
+            log!("force");
             let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
             let beat: &mut Beat = &mut rhythm.0[pos];
             *beat = beat.toggle();
         }
         Msg::SelectRow(row) => model.selected_row = row,
         Msg::NoOp => {}
+        Msg::GlobalMouseDown => model.mouse_down = true,
+        Msg::GlobalMouseUp => model.mouse_down = false,
     }
 }
 
@@ -181,6 +195,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         current_time_step: 0,
         sound_scheduler: SoundScheduler::default(),
         selected_row: 0,
+        mouse_down: false,
     }
 }
 
@@ -223,6 +238,8 @@ pub fn app_view(model: &Model) -> Node<Msg> {
     raf_loop::raf_loop_atom().get();
 
     div![
+        ev(Ev::MouseDown, |_| Msg::GlobalMouseDown),
+        ev(Ev::MouseUp, |_| Msg::GlobalMouseUp),
         s().display_grid()
             .grid_template_rows("auto 300px")
             .height(pc(100))
@@ -243,7 +260,7 @@ pub fn app_view(model: &Model) -> Node<Msg> {
                 .enumerate()
                 .map(beat_bar)
                 .collect::<Vec<Node<Msg>>>()
-        ]
+        ],
     ]
 }
 
@@ -269,7 +286,8 @@ fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
                 .grid_auto_flow("column")
                 .width(pc(100))
                 .margin_top(px(20))
-                .margin_bottom(px(20)),
+                .margin_bottom(px(20))
+                .user_select("none"),
             bar_data
                 .0
                 .iter()
@@ -292,7 +310,8 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
             s().background_color(match beat {
                 Beat::Play => row_colour_dark(row),
                 Beat::Pause => "#FFF",
-            }),
+            })
+            .user_select("none"),
             match neighbours {
                 Neighbours {
                     left: true,
@@ -319,7 +338,8 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
                     s().border_radius("1000px")
                 }
             },
-            input_ev(Ev::Click, move |_| Msg::ToggleBar(row, index))
+            input_ev(Ev::MouseOver, move |_| Msg::ToggleBar(row, index)),
+            input_ev(Ev::MouseDown, move |_| Msg::ForceToggleBar(row, index)),
         ]
     }
 }
