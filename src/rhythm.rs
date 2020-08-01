@@ -30,6 +30,25 @@ impl Rhythm {
     pub fn standard() -> [Self; 4] {
         [Self([Beat::Play; 48]); 4]
     }
-    /// Draw a visual rep of a rhythm to a canvas using dots dashes and breaks.
-    fn draw(self) {}
+    pub fn neighbours(self) -> Vec<Neighbours> {
+        let mut beats = self.0.iter().peekable();
+        let mut neighbours = Vec::new();
+
+        let mut beat_before = false;
+        while let Some(beat) = beats.next() {
+            neighbours.push(Neighbours {
+                left: beat_before,
+                right: beats.peek().map(|beat| beat.is_playing()).unwrap_or(false),
+            });
+            beat_before = beat.is_playing();
+        }
+
+        neighbours
+    }
+}
+
+#[derive(Debug)]
+pub struct Neighbours {
+    pub left: bool,
+    pub right: bool,
 }
