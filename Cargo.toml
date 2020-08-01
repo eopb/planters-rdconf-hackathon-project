@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 seed = { git = "https://github.com/seed-rs/seed", rev = "0a538f0" }
 seed_hooks = {git = "https://github.com/rebo/seed_hooks"}
 seed_style = { package = "seed_style_preview", git="https://github.com/rebo/seed_style_preview" }
+js-sys = "0.3.44"
 
 # Un comment if we want to use serde/wasmbindgen/futures directily - perhaps for fetch
 # serde = { version = "1.0", features = ["derive"] }
@@ -37,6 +38,8 @@ features = [
     'GainNode',
     'OscillatorNode',
     'OscillatorType',
+    'HtmlCanvasElement',
+    'Element',
     # "DomTokenList",
     # "AbortController",
     # "AbortSignal",
