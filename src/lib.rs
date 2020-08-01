@@ -44,6 +44,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     global_styles::global_init();
     let sound = SoundBuilder::new()
         .freq(500.)
+        .gain(0.5)
         .build()
         .unwrap();
     Model { sound }

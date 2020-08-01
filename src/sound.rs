@@ -1,11 +1,11 @@
-use web_sys::AudioContext;
 use web_sys::OscillatorType;
-use web_sys::{GainNode, OscillatorNode};
+use web_sys::{AudioContext, GainNode, OscillatorNode};
 use seed::prelude::JsValue;
 
 pub struct Sound {
     oscillator: OscillatorNode,
     gain: GainNode,
+    context: AudioContext,
     gain_val: f32,
 }
 
@@ -15,7 +15,7 @@ impl Sound {
     }
 
     pub fn pause(&self) {
-        self.gain.gain().set_value(0.);
+        self.gain.gain().set_value(0.0);
     }
 }
 
@@ -48,21 +48,23 @@ impl SoundBuilder {
     
     pub fn build(self) -> Result<Sound, JsValue> {
         // should this be declared here?
-        let audio_context = AudioContext::new()?;
+        let context = AudioContext::new()?;
 
-        let oscillator = audio_context.create_oscillator()?;
+        let gain = context.create_gain()?;
+        gain.gain().set_value(0.);
+        gain.connect_with_audio_node(&context.destination())?;
+
+        let oscillator = context.create_oscillator()?;
         oscillator.set_type(self.osc_type);
         oscillator.frequency().set_value(self.freq);
-
-        let gain = audio_context.create_gain()?;
         oscillator.connect_with_audio_node(&gain)?;
-        gain.gain().set_value(0.);
-        gain.connect_with_audio_node(&audio_context.destination())?;
         oscillator.start()?;
+
         Ok(Sound { 
             oscillator, 
             gain, 
-            gain_val: self.gain 
+            context,
+            gain_val: self.gain,
         })
     }
 }
