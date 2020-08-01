@@ -1,4 +1,5 @@
 use seed::prelude::JsValue;
+use seed::*;
 use web_sys::OscillatorType;
 use web_sys::{AudioContext, GainNode, OscillatorNode};
 
@@ -68,11 +69,16 @@ pub struct Tone {
 impl Tone {
     pub fn play(&self) {
         self.context.resume().unwrap(); // Fix for Chromium
-        self.gain.gain().set_value(self.gain_val);
+        self.gain.gain()//.set_value(self.gain_val);
+            .set_target_at_time(self.gain_val, self.context.current_time(), 0.015)
+            .unwrap();
     }
 
     pub fn pause(&self) {
-        self.gain.gain().set_value(0.0);
+        self.gain
+            .gain()
+            .set_target_at_time(0.0, self.context.current_time(), 0.015)
+            .unwrap();
     }
 
     fn half_gain(&self) {
@@ -112,13 +118,15 @@ impl ToneBuilder {
         let context = AudioContext::new()?;
 
         let gain = context.create_gain()?;
-        gain.gain().set_value(0.);
+        gain.gain().set_value(0.0001);
         gain.connect_with_audio_node(&context.destination())?;
 
         let oscillator = context.create_oscillator()?;
         oscillator.set_type(self.osc_type);
         oscillator.frequency().set_value(self.freq);
         oscillator.connect_with_audio_node(&gain)?;
+
+        context.resume()?;
         oscillator.start()?;
 
         Ok(Tone {
@@ -127,5 +135,10 @@ impl ToneBuilder {
             context,
             gain_val: self.gain,
         })
+    }
+
+    pub fn to_sound(self) -> Result<Sound, JsValue> {
+        let tone = self.build()?;
+        Ok(Sound::from_tones(vec![tone]))
     }
 }
