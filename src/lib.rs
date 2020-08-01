@@ -38,6 +38,7 @@ pub struct Model {
     /// The row a user has selected.
     selected_row: usize,
     mouse_down: bool,
+    clicked_beat: Beat,
 }
 
 impl Model {
@@ -126,7 +127,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
             if model.mouse_down {
                 let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
                 let beat: &mut Beat = &mut rhythm.0[pos];
-                *beat = beat.toggle();
+                *beat = model.clicked_beat;
             }
         }
         Msg::ForceToggleBar(row, pos) => {
@@ -134,6 +135,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
             let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
             let beat: &mut Beat = &mut rhythm.0[pos];
             *beat = beat.toggle();
+            model.clicked_beat = *beat;
         }
 
         Msg::SelectRow(row) => model.selected_row = row,
@@ -219,6 +221,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         sound_scheduler: SoundScheduler::default(),
         selected_row: 0,
         mouse_down: false,
+        clicked_beat: Beat::Play,
     }
 }
 
