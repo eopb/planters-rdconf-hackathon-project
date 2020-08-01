@@ -212,7 +212,12 @@ fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
 }
 
 fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg> {
-    move |(index, (beat, neighbours))| {
+    move |(index, (beat, mut neighbours))| {
+        if index == 0 {
+            neighbours.left = true
+        } else if index == 47 {
+            neighbours.right = true
+        };
         div![
             s().background_color(match beat {
                 Beat::Play => "#F00",
