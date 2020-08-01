@@ -256,7 +256,7 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
         };
         div![
             s().background_color(match beat {
-                Beat::Play => row_colour(row),
+                Beat::Play => row_colour_dark(row),
                 Beat::Pause => "#FFF",
             }),
             match neighbours {
@@ -298,5 +298,16 @@ fn row_colour(index: usize) -> &'static str {
         4 => "#FF0",
         5 => "#F0F",
         _ => "#0FF",
+    }
+}
+
+fn row_colour_dark(index: usize) -> &'static str {
+    match index {
+        1 => "#800",
+        2 => "#080",
+        3 => "#008",
+        4 => "#880",
+        5 => "#808",
+        _ => "#088",
     }
 }
