@@ -1,36 +1,22 @@
 use crate::Model;
+use crate::Sound;
 
 #[derive(Clone, Debug)]
 pub enum SoundSchedulerMsg {
-    AddSound(f64, String),
+    AddSound(f64, Sound),
 }
 
 pub fn update(msg: SoundSchedulerMsg, mut model: &mut Model) {
     match msg {
-        SoundSchedulerMsg::AddSound(time, name) => model
-            .sound_scheduler
-            .schedule_sound_at_secs(time, Sound::new(&name)),
+        SoundSchedulerMsg::AddSound(time, sound) => {
+            model.sound_scheduler.schedule_sound_at_secs(time, sound)
+        }
     }
 }
 
 #[derive(Default)]
 pub struct SoundScheduler {
     pub schedule: Vec<(u64, Sound)>,
-}
-
-//placeholder for real sound struct
-pub struct Sound {
-    pub data: String,
-    pub played: bool,
-}
-
-impl Sound {
-    fn new(name: &str) -> Self {
-        Self {
-            data: name.to_string(),
-            played: false,
-        }
-    }
 }
 
 impl SoundScheduler {
