@@ -145,9 +145,11 @@ impl ToneBuilder {
 
 struct SSound {
     oscillator: OscillatorNode,
-    gain: GainNode,
+    gain_node: GainNode,
     context: AudioContext,
-    gain_val: f32,
+    gain: f32,
+    freq: f32,
+    shape: OscillatorType,
 }
 
 impl Default for SSound {
@@ -158,22 +160,62 @@ impl Default for SSound {
 
 impl SSound {
     fn build() -> Result<Self, JsValue> {
+        let shape = OscillatorType::Sine;
+        let freq = 440.0;
+        let gain = 0.0;
+
         let context = AudioContext::new()?;
 
-        let gain = context.create_gain()?;
-        gain.gain().set_value(0.0);
-        gain.connect_with_audio_node(&context.destination())?;
+        let gain_node = context.create_gain()?;
+        gain_node.gain().set_value(gain);
+        gain_node.connect_with_audio_node(&context.destination())?;
 
         let oscillator = context.create_oscillator()?;
-        oscillator.set_type(self.osc_type);
-        oscillator.frequency().set_value(self.freq);
-        oscillator.connect_with_audio_node(&gain)?;
+        oscillator.set_type(shape);
+        oscillator.frequency().set_value(freq);
+        oscillator.connect_with_audio_node(&gain_node)?;
 
         Ok(SSound {
             oscillator,
-            gain,
+            gain_node,
             context,
-            gain_val,
+            gain,
+            freq,
+            shape,
         })
     }
+
+    pub fn freq(mut self, freq: f32) -> Self {
+        self.oscillator.frequency().set_value(freq);
+        self.freq = freq;
+        self
+    }
+
+    pub fn gain(mut self, gain: f32) -> Self {
+        self.gain_node.gain().set_value(gain);
+        self.gain = gain;
+        self
+    }
+
+    pub fn shape(mut self, shape: OscillatorType) -> Self {
+        self.oscillator.set_type(shape);
+        self.shape = shape;
+        self
+    }
+
+    pub fn play(&self) {
+        self.context.resume().unwrap(); // Fix for Chromium
+        self.gain_node
+            .gain()
+            .set_target_at_time(self.gain, self.context.current_time(), 0.015)
+            .unwrap();
+    }
+
+    pub fn pause(&self) {
+        self.gain_node
+            .gain()
+            .set_target_at_time(0.0, self.context.current_time(), 0.015)
+            .unwrap();
+    }
+
 }
