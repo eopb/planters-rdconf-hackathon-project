@@ -188,6 +188,8 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         )
         .notify(subs::UrlChanged(url));
 
+    orders.send_msg(Msg::ResizeCanvas);
+
     let sound = Sound::default().gain(0.1).freq(440.0);
     Model {
         sound,
