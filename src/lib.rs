@@ -125,10 +125,14 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .unwrap();
 
             new_canvas_frame(model, canvas_el, context);
-            let freq = (relative_pos_x as f32 * 11_00. / width) as f32;
+            let freq = {
+                let a_note = 440.0;
+                let num_keys = 12.0;
+                let scaled = (relative_pos_x as f32 * 11_00. / width) as f32;
+                let nearest_key = ((scaled / a_note).log2() * num_keys).floor();
+                a_note * 2.0f32.powf(nearest_key / num_keys)
+            };
             let vol = (relative_pos_y as f32 * 10. / height) as f32;
-
-            // model.sound = Sound::default().gain(vol).freq(freq);
 
             if let Some(selected_row) = model.rows.get_mut(model.selected_row) {
                 selected_row.sound = selected_row.sound.clone().gain(vol).freq(freq);
