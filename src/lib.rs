@@ -1,6 +1,5 @@
 use seed::prelude::*;
 use seed::*;
-use web_sys::AudioContext;
 use web_sys::OscillatorType;
 
 use seed_style::px; // almost always want seed-style px instead of seed px
@@ -9,7 +8,7 @@ use seed_style::{pc, *};
 mod app;
 mod global_styles;
 mod sound;
-use sound::{Sound, SoundBuilder};
+use sound::{Sound, Tone, ToneBuilder};
 
 //
 //  Model, Msg, Update, init(), and start()
@@ -27,7 +26,7 @@ pub enum Msg {
     StopSound,
 }
 
-fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
+fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
     log!(msg);
 
     match msg {
@@ -42,10 +41,21 @@ fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     global_styles::global_init();
-    let sound = SoundBuilder::new()
-        .freq(500.)
-        .build()
-        .unwrap();
+    let sound = Sound::new()
+        .add_tone(
+            ToneBuilder::new()
+                .freq(500.0)
+                .gain(0.5)
+                .build()
+                .unwrap()
+        )
+        .add_tone(
+            ToneBuilder::new()
+                .freq(250.0)
+                .gain(0.5)
+                .build()
+                .unwrap()
+        );
     Model { sound }
 }
 
@@ -73,7 +83,7 @@ pub fn view(model: &Model) -> Node<Msg> {
             s().display_flex().flex_direction_row(),
             div![s().width(px(200)).flex_none(), "Hello World"],
             button!["start", input_ev(Ev::Click, |_| Msg::ProduceSound)],
-            button!["stop", input_ev(Ev::Click, |_| Msg::StopSound)]
+            button!["stop", input_ev(Ev::Click, |_| Msg::StopSound)],
         ]
     ]
 }
