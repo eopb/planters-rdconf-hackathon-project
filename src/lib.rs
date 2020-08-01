@@ -159,7 +159,8 @@ pub fn app_view(model: &Model) -> Node<Msg> {
     raf_loop::raf_loop_atom().get();
 
     div![
-        s().display_grid()
+        s().box_sizing_border_box()
+            .display_grid()
             .grid_template_rows("auto 300px")
             .height(pc(100))
             .width(pc(100)),
