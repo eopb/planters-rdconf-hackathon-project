@@ -229,19 +229,19 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
                     left: true,
                     right: false,
                 } => {
-                    s().border_radius("0 100% 100% 0")
+                    s().border_radius("0 1000px 1000px 0")
                 }
                 Neighbours {
                     left: false,
                     right: true,
                 } => {
-                    s().border_radius("100% 0 0 100%")
+                    s().border_radius("1000px 0 0 1000px")
                 }
                 Neighbours {
                     left: false,
                     right: false,
                 } => {
-                    s().border_radius("100%")
+                    s().border_radius("1000px")
                 }
             },
             input_ev(Ev::Click, move |_| Msg::ToggleBar(row, index))
