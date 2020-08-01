@@ -72,9 +72,34 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             let width = canvas_el.width() as f32;
             let height = canvas_el.height() as f32;
 
-            let el: HtmlElement = canvas_el.into();
-            let freq = ((x - el.offset_left()) as f32 * 11_00. / width) as f32;
-            let vol = ((y - el.offset_top()) as f32 * 10. / height) as f32;
+            let el: HtmlElement = canvas_el.clone().into();
+
+            let relative_pos_x = x - el.offset_left();
+            let relative_pos_y = y - el.offset_top();
+
+            log!("new one");
+
+            log!(x);
+            log!(y);
+
+            log!(el.offset_left());
+            log!(el.offset_top());
+
+            log!(relative_pos_x);
+            log!(relative_pos_y);
+
+            let context = canvas_el
+                .get_context("2d")
+                .unwrap()
+                .unwrap()
+                .dyn_into::<web_sys::CanvasRenderingContext2d>()
+                .unwrap();
+
+            context.fill_rect(relative_pos_x as f64, relative_pos_y as f64, 5., 5.);
+
+            let freq = (relative_pos_x as f32 * 11_00. / width) as f32;
+            let vol = (relative_pos_y as f32 * 10. / height) as f32;
+
             model.sound = ToneBuilder::new().gain(vol).freq(freq).build().unwrap();
         }
         Msg::ToggleBar(row, pos) => {
