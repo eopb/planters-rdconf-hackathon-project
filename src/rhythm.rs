@@ -5,10 +5,10 @@ use rand::{
 };
 
 /// A rhythm is a collection off notes and pauses to make a pattern.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Rhythm(pub [Beat; 48]);
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Beat {
     Play,
     Pause,

@@ -1,5 +1,6 @@
+use crate::rhythm::{Beat, Rhythm};
 use crate::sound::Sound;
-
+use crate::Model;
 pub struct Row {
     pub row: usize,
     pub sound: Option<Sound>,
@@ -28,5 +29,54 @@ impl Bar {
             pos,
             on: false,
         }
+    }
+}
+
+pub fn init_rows_in_model(vec_of_rows: &mut Vec<Row>, rs: &Vec<Rhythm>) {
+    let mut last_beat: Option<&Beat> = None;
+    for (row_idx, r) in rs.iter().enumerate() {
+        for (pos, beat) in r.0.iter().enumerate() {
+            match (last_beat, beat) {
+                (None, beat) => {
+                    if beat.is_playing() {
+                        vec_of_rows
+                            .get_mut(row_idx)
+                            .unwrap()
+                            .bars
+                            .get_mut(pos)
+                            .unwrap()
+                            .on = true;
+                    }
+                }
+                (Some(last), beat) => match (last.is_playing(), beat.is_playing()) {
+                    (false, false) => {}
+                    (false, true) => {
+                        if beat.is_playing() {
+                            vec_of_rows
+                                .get_mut(row_idx)
+                                .unwrap()
+                                .bars
+                                .get_mut(pos)
+                                .unwrap()
+                                .on = true;
+                        }
+                    }
+                    (true, false) => {}
+                    (true, true) => {
+                        if beat.is_playing() {
+                            vec_of_rows
+                                .get_mut(row_idx)
+                                .unwrap()
+                                .bars
+                                .get_mut(pos)
+                                .unwrap()
+                                .on = true;
+                        }
+                    }
+                },
+            }
+            last_beat = Some(beat);
+        }
+        last_beat = None;
     }
 }

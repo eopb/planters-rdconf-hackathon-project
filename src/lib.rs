@@ -39,14 +39,6 @@ impl Model {
     pub fn secs_elapsed(&self) -> f64 {
         (self.current_time_step as f64) / 60.0
     }
-
-    pub fn get_sound_from_selector_pane(&self, row: usize) -> Sound {
-        Sound::from_tones(vec![crate::sound::ToneBuilder::new()
-            .gain(4.0)
-            .freq(400.0)
-            .build()
-            .unwrap()])
-    }
 }
 
 pub static MAIN_LOOP_DURATION: f64 = 48.0;
@@ -148,13 +140,18 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         .notify(subs::UrlChanged(url));
 
     let sound = Sound::default().gain(0.1).freq(440.0);
+    let default_rhythm = Rhythm::standard().to_vec();
+    let mut scheduler = SoundScheduler::default();
+    scheduler.init_with_rhythm(&default_rhythm);
+    let mut vec_of_rows = (0..=5).map(|idx| Row::new(idx)).collect();
+    row_and_bars::init_rows_in_model(&mut vec_of_rows, &default_rhythm);
     Model {
         sound,
         sound_selector: ElRef::<HtmlCanvasElement>::default(),
-        beat_bars: { Rhythm::standard().into() },
+        beat_bars: default_rhythm,
         current_time_step: 0,
-        sound_scheduler: SoundScheduler::default(),
-        rows: (0..=5).map(|idx| Row::new(idx)).collect(),
+        sound_scheduler: scheduler,
+        rows: vec_of_rows,
     }
 }
 

@@ -1,5 +1,8 @@
+use crate::rhythm::{Beat, Rhythm};
 use crate::Model;
 use crate::Sound;
+use crate::TICKS_IN_ONE_BAR;
+use seed::{prelude::*, *};
 
 #[derive(Clone, Debug)]
 pub enum SoundSchedulerMsg {
@@ -34,6 +37,42 @@ impl Default for SoundScheduler {
 
 impl SoundScheduler {
     // insert sound in order
+
+    pub fn init_with_rhythm(&mut self, rs: &Vec<Rhythm>) {
+        let mut last_beat: Option<&Beat> = None;
+        for (row_idx, r) in rs.iter().enumerate() {
+            for (pos, beat) in r.0.iter().enumerate() {
+                match (last_beat, beat) {
+                    (None, this_beat) => {
+                        if this_beat.is_playing() {
+                            log!(row_idx);
+                            log!(pos);
+                            self.schedule_sound(0, row_idx, SoundCommand::Play);
+                        }
+                    }
+                    (Some(last), beat) => match (last.is_playing(), beat.is_playing()) {
+                        (false, false) => {}
+                        (false, true) => {
+                            self.schedule_sound(
+                                TICKS_IN_ONE_BAR * (pos as u64),
+                                row_idx,
+                                SoundCommand::Play,
+                            );
+                        }
+                        (true, false) => self.schedule_sound(
+                            TICKS_IN_ONE_BAR * (pos as u64),
+                            row_idx,
+                            SoundCommand::Stop,
+                        ),
+                        (true, true) => {}
+                    },
+                }
+                last_beat = Some(beat);
+            }
+            last_beat = None;
+        }
+    }
+
     pub fn schedule_sound_at_secs(&mut self, at_secs: f64, row: usize, cmd: SoundCommand) {
         let timestep = (at_secs * 60.0) as u64;
         self.schedule_sound(timestep, row, cmd);
