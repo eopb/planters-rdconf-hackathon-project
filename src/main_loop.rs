@@ -1,3 +1,4 @@
+use crate::sound_scheduler::SoundCommand;
 use crate::Model;
 use seed::*;
 
@@ -14,7 +15,14 @@ pub fn time_step_advanced(model: &mut Model) {
 
 pub fn time_step_loop_stopped(model: &mut Model) {
     model.current_time_step = 0;
-    for (ts, sound) in model.sound_scheduler.schedule.iter_mut() {
+    for (ts, row, _) in model.sound_scheduler.schedule.iter_mut() {
+        let sound = &model
+            .rows
+            .get(*row)
+            .expect("row to  be present")
+            .sound
+            .as_ref()
+            .expect("sound to be prseent");
         sound.pause()
     }
 }
@@ -30,9 +38,19 @@ fn advance_time_step_counter(model: &mut Model) {
 fn register_new_sounds(_model: &mut Model) {}
 
 fn trigger_scheduled_sounds(model: &mut Model) {
-    for (ts, sound) in model.sound_scheduler.schedule.iter_mut() {
+    for (ts, row, cmd) in model.sound_scheduler.schedule.iter_mut() {
         if *ts == model.current_time_step {
-            sound.play()
+            let mut sound = model
+                .rows
+                .get_mut(*row)
+                .expect("row to be present")
+                .sound
+                .as_mut()
+                .expect("sound to be prseent");
+            match cmd {
+                SoundCommand::Play => sound.play(),
+                SoundCommand::Stop => sound.pause(),
+            }
         }
     }
 }

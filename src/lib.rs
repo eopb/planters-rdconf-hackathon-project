@@ -17,9 +17,12 @@ mod rhythm;
 use rhythm::{Beat, Neighbours, Rhythm};
 mod main_loop;
 mod raf_loop;
+mod sequencer_controller;
 mod sound_scheduler;
 mod testing_ui;
 use sound_scheduler::*;
+mod row_and_bars;
+use row_and_bars::{Bar, Row};
 
 //
 //  Model, Msg, Update, init(), and start()
@@ -30,6 +33,7 @@ pub struct Model {
     sound_scheduler: SoundScheduler,
     sound: Sound,
     sound_selector: ElRef<HtmlCanvasElement>,
+    rows: Vec<Row>,
     beat_bars: Vec<(
         Rhythm,
         // Where the rhythm is attached to the canvas
@@ -45,6 +49,9 @@ impl Model {
         (self.current_time_step as f64) / 60.0
     }
 }
+
+pub static MAIN_LOOP_DURATION: f64 = 48.0;
+pub static TICKS_IN_ONE_BAR: u64 = ((MAIN_LOOP_DURATION / 48.0) * 60.0) as u64;
 
 // In aps that make use of conditional rendering on breakpoints we We just need one Msg
 // in order to handle a WindowResized event.
@@ -127,6 +134,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
                 let beat: &mut Beat = &mut rhythm.0[pos];
                 *beat = beat.toggle();
+                sequencer_controller::bar_toggled(model, row, pos);
             }
         }
         Msg::ForceToggleBar(row, pos) => {
@@ -134,6 +142,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
             let rhythm: &mut Rhythm = &mut model.beat_bars.get_mut(row).unwrap().0;
             let beat: &mut Beat = &mut rhythm.0[pos];
             *beat = beat.toggle();
+            sequencer_controller::bar_toggled(model, row, pos);
         }
 
         Msg::SelectRow(row) => model.selected_row = row,
@@ -205,18 +214,21 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     orders.send_msg(Msg::ResizeCanvas);
 
     let sound = Sound::default().gain(0.1).freq(440.0);
+    let default_rhythm = Rhythm::standard()
+        .into_iter()
+        .map(|rhythm| (*rhythm, None))
+        .collect();
+    let mut scheduler = SoundScheduler::default();
+    scheduler.init_with_rhythm(&default_rhythm);
+    let mut vec_of_rows = (0..=5).map(|idx| Row::new(idx)).collect();
+    row_and_bars::init_rows_in_model(&mut vec_of_rows, &default_rhythm);
     Model {
         sound,
         sound_selector: ElRef::<HtmlCanvasElement>::default(),
-        beat_bars: {
-            Rhythm::standard()
-                .into_iter()
-                .map(|rhythm| (*rhythm, None))
-                .collect()
-        },
-
+        beat_bars: default_rhythm,
         current_time_step: 0,
-        sound_scheduler: SoundScheduler::default(),
+        rows: vec_of_rows,
+        sound_scheduler: scheduler,
         selected_row: 0,
         mouse_down: false,
     }
@@ -358,8 +370,9 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
                     s().border_radius("1000px")
                 }
             },
-            input_ev(Ev::MouseOver, move |_| Msg::ToggleBar(row, index)),
-            input_ev(Ev::MouseDown, move |_| Msg::ForceToggleBar(row, index)),
+            // mouse_ev(Ev::Click, move |_| Msg::ToggleBar(row, index)),
+            mouse_ev(Ev::MouseOver, move |_| Msg::ToggleBar(row, index)),
+            mouse_ev(Ev::MouseDown, move |_| Msg::ForceToggleBar(row, index)),
         ]
     }
 }
