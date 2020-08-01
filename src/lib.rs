@@ -8,6 +8,8 @@ use seed_style::{pc, *};
 use web_sys::{HtmlCanvasElement, HtmlElement};
 
 mod app;
+mod draw;
+use draw::Draw;
 mod global_styles;
 mod sound;
 use sound::Sound;
@@ -95,8 +97,7 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
                 .dyn_into::<web_sys::CanvasRenderingContext2d>()
                 .unwrap();
 
-            context.fill_rect(relative_pos_x as f64, relative_pos_y as f64, 5., 5.);
-
+            draw::Rect::crosshair((relative_pos_x as f64, relative_pos_y as f64)).draw(&context);
             let freq = (relative_pos_x as f32 * 11_00. / width) as f32;
             let vol = (relative_pos_y as f32 * 10. / height) as f32;
 
