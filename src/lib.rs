@@ -13,7 +13,6 @@ mod sound;
 use sound::Sound;
 mod rhythm;
 use rhythm::{Beat, Neighbours, Rhythm};
-use sound::{Tone, ToneBuilder};
 mod main_loop;
 mod raf_loop;
 mod sequencer_controller;
@@ -30,7 +29,7 @@ use row_and_bars::{Bar, Row};
 pub struct Model {
     current_time_step: u64,
     sound_scheduler: SoundScheduler,
-    sound: Tone,
+    sound: Sound,
     sound_selector: ElRef<HtmlCanvasElement>,
     beat_bars: Vec<Rhythm>,
     rows: Vec<Row>,
@@ -115,7 +114,7 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
             let freq = (relative_pos_x as f32 * 11_00. / width) as f32;
             let vol = (relative_pos_y as f32 * 10. / height) as f32;
 
-            model.sound = ToneBuilder::new().gain(vol).freq(freq).build().unwrap();
+            model.sound = Sound::default().gain(vol).freq(freq);
         }
         Msg::ToggleBar(row, pos) => {
             let rhythm: &mut Rhythm = model.beat_bars.get_mut(row).unwrap();
@@ -148,10 +147,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         )
         .notify(subs::UrlChanged(url));
 
-    let sound = Sound::new()
-        .add_tone(ToneBuilder::new().freq(500.0).gain(0.5).build().unwrap())
-        .add_tone(ToneBuilder::new().freq(250.0).gain(0.5).build().unwrap());
-    let sound = ToneBuilder::new().freq(500.).build().unwrap();
+    let sound = Sound::default().gain(0.1).freq(440.0);
     Model {
         sound,
         sound_selector: ElRef::<HtmlCanvasElement>::default(),
@@ -226,6 +222,8 @@ pub fn app_view(model: &Model) -> Node<Msg> {
 
 fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
     div![
+        button!["play", ev(Ev::Click, |_| Msg::ProduceSound)],
+        button!["pause", ev(Ev::Click, |_| Msg::StopSound)],
         s().display_grid()
             .grid_template_columns("200px auto")
             .height(pc(100)),
