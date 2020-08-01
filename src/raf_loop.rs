@@ -105,7 +105,7 @@ pub fn raf_loop_atom() -> Atom<RafLoop> {
 
         while delta >= raf_loop.timestep {
             //
-            // make any adjustments based on timestep or detla
+            // make any adjustments based on timestep or delta
             delta -= raf_loop.timestep;
             crate::my_app().get().unwrap().update(Msg::TimeStepAdvanced);
         }

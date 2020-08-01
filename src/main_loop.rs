@@ -15,7 +15,7 @@ pub fn time_step_advanced(model: &mut Model) {
 pub fn time_step_loop_stopped(model: &mut Model) {
     model.current_time_step = 0;
     for (ts, sound) in model.sound_scheduler.schedule.iter_mut() {
-        sound.played = false
+        sound.pause()
     }
 }
 
@@ -32,7 +32,7 @@ fn register_new_sounds(_model: &mut Model) {}
 fn trigger_scheduled_sounds(model: &mut Model) {
     for (ts, sound) in model.sound_scheduler.schedule.iter_mut() {
         if *ts == model.current_time_step {
-            sound.played = true
+            sound.play()
         }
     }
 }

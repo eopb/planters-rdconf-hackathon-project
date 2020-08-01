@@ -2,9 +2,22 @@ use seed::prelude::JsValue;
 use web_sys::OscillatorType;
 use web_sys::{AudioContext, GainNode, OscillatorNode};
 
+#[derive(Debug, Clone)]
+pub enum SoundStatus {
+    Unplayed,
+    Played,
+}
+
+impl Default for SoundStatus {
+    fn default() -> Self {
+        SoundStatus::Unplayed
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Sound {
     tones: Vec<Tone>,
+    status: SoundStatus,
 }
 
 impl Sound {
@@ -13,7 +26,10 @@ impl Sound {
     }
 
     pub fn from_tones(tones: Vec<Tone>) -> Self {
-        Self { tones }
+        Self {
+            tones,
+            status: SoundStatus::Unplayed,
+        }
     }
 
     pub fn add_tone(mut self, s: Tone) -> Self {
@@ -21,7 +37,8 @@ impl Sound {
         self
     }
 
-    pub fn play(&self) {
+    pub fn play(&mut self) {
+        self.status = SoundStatus::Played;
         for tone in &self.tones {
             tone.play();
         }
