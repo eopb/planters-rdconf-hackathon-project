@@ -21,8 +21,8 @@ impl Rect {
     }
     pub fn crosshair(center: (f64, f64)) -> Vec<Self> {
         vec![
-            Self::from_center(center, 1., 19.),
-            Self::from_center(center, 19., 1.),
+            Self::from_center(center, 5., 34.),
+            Self::from_center(center, 34., 5.),
         ]
     }
 }

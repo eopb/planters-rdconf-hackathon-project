@@ -288,6 +288,10 @@ pub fn app_view(model: &Model) -> Node<Msg> {
         ],],
         div![
             s().height(pc(100)).display_grid(),
+            div![
+                button!["play", ev(Ev::Click, |_| Msg::ProduceSound)],
+                button!["pause", ev(Ev::Click, |_| Msg::StopSound)],
+            ],
             model
                 .beat_bars
                 .iter()
@@ -301,8 +305,6 @@ pub fn app_view(model: &Model) -> Node<Msg> {
 
 fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
     div![
-        button!["play", ev(Ev::Click, |_| Msg::ProduceSound)],
-        button!["pause", ev(Ev::Click, |_| Msg::StopSound)],
         s().display_grid()
             .grid_template_columns("200px auto")
             .height(pc(100)),
