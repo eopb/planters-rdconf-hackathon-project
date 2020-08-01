@@ -263,7 +263,6 @@ pub fn app_view(model: &Model) -> Node<Msg> {
                 .map(beat_bar)
                 .collect::<Vec<Node<Msg>>>()
         ],
-        div![model.mouse_down.to_string()],
     ]
 }
 
