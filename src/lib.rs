@@ -12,7 +12,7 @@ mod global_styles;
 mod sound;
 use sound::Sound;
 mod rhythm;
-use rhythm::{Beat, Rhythm};
+use rhythm::{Beat, Neighbours, Rhythm};
 use sound::{Tone, ToneBuilder};
 mod main_loop;
 mod raf_loop;
@@ -163,16 +163,13 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             .grid_template_rows("auto 300px")
             .height(pc(100))
             .width(pc(100)),
-        div![
-            canvas![
-                el_ref(&model.sound_selector),
-                style![
-                    St::Border => "1px solid black",
-                ],
-                mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y()))
+        div![canvas![
+            el_ref(&model.sound_selector),
+            style![
+                St::Border => "1px solid black",
             ],
-            // Where to put the canvas
-        ],
+            mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y()))
+        ],],
         div![
             s().height(pc(100)).display_grid(),
             model
@@ -191,14 +188,22 @@ fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
             .grid_template_columns("200px auto")
             .height(pc(100)),
         div![
-            s().background_color("#000"),
+            s().background_color("#000")
+                .display_flex()
+                .justify_content_center()
+                .align_items_center(),
             button!["Select this rhythm", input_ev(Ev::Click, |_| panic!())]
         ],
         div![
-            s().display_grid().grid_auto_flow("column").width(pc(100)),
+            s().display_grid()
+                .grid_auto_flow("column")
+                .width(pc(100))
+                .margin_top(px(20))
+                .margin_bottom(px(20)),
             bar_data
                 .0
                 .iter()
+                .zip(bar_data.neighbours())
                 .enumerate()
                 .map(beat_bar_box(index))
                 .collect::<Vec<Node<Msg>>>()
@@ -206,13 +211,44 @@ fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
     ]
 }
 
-fn beat_bar_box(row: usize) -> impl Fn((usize, &Beat)) -> Node<Msg> {
-    move |(index, beat)| {
+fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg> {
+    move |(index, (beat, mut neighbours))| {
+        if index == 0 {
+            neighbours.left = true
+        } else if index == 47 {
+            neighbours.right = true
+        };
         div![
             s().background_color(match beat {
                 Beat::Play => "#F00",
-                Beat::Pause => "0F0",
+                Beat::Pause => "#FFF",
             }),
+            match neighbours {
+                Neighbours {
+                    left: true,
+                    right: true,
+                } => {
+                    s()
+                }
+                Neighbours {
+                    left: true,
+                    right: false,
+                } => {
+                    s().border_radius("0 1000px 1000px 0")
+                }
+                Neighbours {
+                    left: false,
+                    right: true,
+                } => {
+                    s().border_radius("1000px 0 0 1000px")
+                }
+                Neighbours {
+                    left: false,
+                    right: false,
+                } => {
+                    s().border_radius("1000px")
+                }
+            },
             input_ev(Ev::Click, move |_| Msg::ToggleBar(row, index))
         ]
     }
