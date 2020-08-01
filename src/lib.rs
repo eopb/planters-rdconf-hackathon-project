@@ -37,6 +37,7 @@ pub struct Model {
     )>,
     /// The row a user has selected.
     selected_row: usize,
+    mouse_down: bool,
 }
 
 impl Model {
@@ -61,6 +62,8 @@ pub enum Msg {
     NoOp,
 
     ToggleBar(usize, usize),
+    GlobalMouseDown,
+    GlobalMouseUp,
     SelectRow(usize),
 }
 fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
@@ -121,6 +124,8 @@ fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
         }
         Msg::SelectRow(row) => model.selected_row = row,
         Msg::NoOp => {}
+        Msg::GlobalMouseDown => model.mouse_down = true,
+        Msg::GlobalMouseUp => model.mouse_down = false,
     }
 }
 
@@ -181,6 +186,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         current_time_step: 0,
         sound_scheduler: SoundScheduler::default(),
         selected_row: 0,
+        mouse_down: false,
     }
 }
 
@@ -213,10 +219,14 @@ fn current_page() -> Atom<Page> {
 //  The content block also activates themed global_styles.
 //  ---------------
 pub fn view(model: &Model) -> Node<Msg> {
-    match current_page().get() {
-        Page::MainApp => app_view(model),
-        Page::HiddenTestUI => testing_ui::view(model),
-    }
+    div![
+        match current_page().get() {
+            Page::MainApp => app_view(model),
+            Page::HiddenTestUI => testing_ui::view(model),
+        },
+        ev(Ev::MouseDown, |_| Msg::GlobalMouseDown),
+        ev(Ev::MouseUp, |_| Msg::GlobalMouseUp),
+    ]
 }
 
 pub fn app_view(model: &Model) -> Node<Msg> {
@@ -319,7 +329,7 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
                     s().border_radius("1000px")
                 }
             },
-            input_ev(Ev::Click, move |_| Msg::ToggleBar(row, index))
+            input_ev(Ev::MouseDown, move |_| Msg::ToggleBar(row, index))
         ]
     }
 }
