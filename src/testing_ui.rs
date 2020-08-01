@@ -14,8 +14,8 @@ pub fn view(model: &Model) -> Node<Msg> {
     div![
         s().flex("0 1 100%"),
         play_controls(model),
-        schedule_controls(),
-        current_schedule(model),
+        // schedule_controls(),
+        // current_schedule(model),
     ]
 }
 
