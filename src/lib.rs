@@ -9,14 +9,15 @@ use seed_style::{pc, *};
 mod app;
 mod global_styles;
 mod sound;
-use sound::{Sound, SoundBuilder};
+use sound::{Sound, Tone, ToneBuilder};
 
 //
 //  Model, Msg, Update, init(), and start()
 //  ---------------------------------------
 
 pub struct Model {
-    sound: Sound,
+    sound: Tone,
+    sounds: Sound,
 }
 
 // In aps that make use of conditional rendering on breakpoints we We just need one Msg
@@ -32,22 +33,32 @@ fn update(msg: Msg, model: &mut Model, _orders: &mut impl Orders<Msg>) {
 
     match msg {
         Msg::ProduceSound => {
-            model.sound.play();
+            model.sounds.play();
         }
         Msg::StopSound => {
-            model.sound.pause();
+            model.sounds.pause();
         }
     }
 }
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     global_styles::global_init();
-    let sound = SoundBuilder::new()
+    let sound = ToneBuilder::new()
         .freq(500.)
         .gain(0.5)
+        .osc_type(OscillatorType::Square)
         .build()
         .unwrap();
-    Model { sound }
+    let sound2 = ToneBuilder::new()
+        .freq(1000.)
+        .gain(0.5)
+        .osc_type(OscillatorType::Square)
+        .build()
+        .unwrap();
+    let sounds = Sound::new()
+        .add_tone(sound.clone())
+        .add_tone(sound2);
+    Model { sound, sounds }
 }
 
 #[wasm_bindgen(start)]
