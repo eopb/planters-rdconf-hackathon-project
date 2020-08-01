@@ -38,6 +38,8 @@ features = [
     'GainNode',
     'OscillatorNode',
     'OscillatorType',
+    'HtmlCanvasElement',
+    'Element',
     # "DomTokenList",
     # "AbortController",
     # "AbortSignal",

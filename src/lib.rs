@@ -4,6 +4,7 @@ use web_sys::OscillatorType;
 
 use seed_style::px; // almost always want seed-style px instead of seed px
 use seed_style::{pc, *};
+use web_sys::{HtmlCanvasElement, HtmlElement};
 
 mod app;
 mod global_styles;
@@ -26,6 +27,7 @@ pub struct Model {
 }
 pub struct Model {
     sound: Sound,
+    canvas: ElRef<HtmlCanvasElement>,
 }
 
 impl Model {
@@ -46,6 +48,7 @@ pub enum Msg {
     NoOp,
     ProduceSound,
     StopSound,
+    Click(i32, i32),
 }
 fn update(msg: Msg, mut model: &mut Model, _orders: &mut impl Orders<Msg>) {
     // log!(msg);    // always worth logging the message in development for debug purposes.
@@ -66,6 +69,16 @@ fn update(msg: Msg, model: &mut Model, orders: &mut impl Orders<Msg>) {
         }
         Msg::StopSound => {
             model.sound.pause();
+        }
+        Msg::Click(x, y) => {
+            let canvas_el = model.canvas.get().unwrap();
+            let width = canvas_el.width() as f32;
+            let height = canvas_el.height() as f32;
+
+            let el: HtmlElement = canvas_el.into();
+            let freq = ((x - el.offset_left()) as f32 * 11_00. / width) as f32;
+            let vol = ((y - el.offset_top()) as f32 * 10. / height) as f32;
+            model.sound = SoundBuilder::new().gain(vol).freq(freq).build().unwrap();
         }
     }
 }
@@ -93,6 +106,11 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
                 .unwrap()
         );
     Model { sound }
+    let sound = SoundBuilder::new().freq(500.).build().unwrap();
+    Model {
+        sound,
+        canvas: ElRef::<HtmlCanvasElement>::default(),
+    }
 }
 
 #[wasm_bindgen(start)]
@@ -114,7 +132,13 @@ pub fn view(model: &Model) -> Node<Msg> {
             .height(pc(100))
             .width(pc(100)),
         div![
-            "hello world",
+            canvas![
+                el_ref(&model.canvas),
+                style![
+                    St::Border => "1px solid black",
+                ],
+                mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y()))
+            ],
             // Where to put the canvas
         ],
         div![
