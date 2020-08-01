@@ -221,7 +221,7 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
         div![
             s().background_color(match beat {
                 Beat::Play => "#F00",
-                Beat::Pause => "0F0",
+                Beat::Pause => "#FFF",
             }),
             match neighbours {
                 Neighbours {
