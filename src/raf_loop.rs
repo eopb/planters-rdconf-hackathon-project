@@ -90,21 +90,6 @@ pub fn raf_loop_atom() -> Atom<RafLoop>{
        }
     }
 
-        // if !raf_loop.commands.is_empty(){
-        //     for cmd in raf_loop.commands.drain(..) {
-        //         if cmd == RafLoopCommand::Stop {
-        //             raf_loop_atom().update(|e|
-        //             {
-        //                 e.last_frame_ts = None;
-        //                 e.status = LoopStatus::Stopped;
-        //                 e.commands = vec![]
-        //             });
-        //             log!("stopping raf loop");
-        //             crate::my_app().get().unwrap().update(Msg::TimeStepLoopStopped);
-        //             return;
-        //         }
-        //     }     
-        // }
 
         // If possible_last_frame_timestep is none, then this is the first run after a pause.
         // shedule a raf restart and return.
