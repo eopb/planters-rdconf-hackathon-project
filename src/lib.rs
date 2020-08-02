@@ -297,7 +297,8 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             button![
                 s().position_absolute()
                     .color("white")
-                    .background_color("black"),
+                    .background_color("black")
+                    .font_size(em(1.5)),
                 "About"
             ],
             canvas![
@@ -367,11 +368,47 @@ fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
             ]
         ],
         div![
+            if index == 0 {
+                div![
+                    s().display_flex()
+                        .height(px(40))
+                        .position_absolute()
+                        .top(px(-67))
+                        .right(px(0))
+                        .background_color("#EEE")
+                        .padding(px(5))
+                        .border_radius("8px 0 0 8px"),
+                    div![
+                        s().padding_right(px(4)),
+                        p!["Speed"],
+                        input![attrs! {
+                            At::Type => "range",
+                            At::Value => 0,
+                            At::Min => 0,
+                            At::Max => 10 ,
+                            At::Step => "any",
+                        }]
+                    ],
+                    div![
+                        p!["Spookiness"],
+                        input![attrs! {
+                            At::Type => "range",
+                            At::Value => 0,
+                            At::Min => 0,
+                            At::Max => 10 ,
+                            At::Step => "any",
+                        }]
+                    ]
+                ]
+            } else {
+                empty()
+            },
             s().display_grid()
                 .grid_auto_flow("column")
                 .width(pc(100))
                 .margin_top(px(20))
                 .margin_bottom(px(20))
+                .position_relative()
                 .user_select("none"),
             bar_data
                 .0
