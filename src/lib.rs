@@ -296,7 +296,7 @@ pub fn view(model: &Model) -> Node<Msg> {
 
 pub fn app_view(model: &Model) -> Node<Msg> {
     raf_loop::raf_loop_atom().get();
-
+    let label_style = s().position_absolute().color("black").font_size(em(1.5));
     div![
         ev(Ev::MouseDown, |_| Msg::GlobalMouseDown),
         ev(Ev::MouseUp, |_| Msg::GlobalMouseUp),
@@ -305,6 +305,7 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             .height(pc(100))
             .width(pc(100)),
         div![
+            s().position_relative(),
             button![
                 s().position_absolute()
                     .color("white")
@@ -312,9 +313,15 @@ pub fn app_view(model: &Model) -> Node<Msg> {
                     .font_size(em(1.5)),
                 "About"
             ],
+            p![
+                "🡐 Volume",
+                label_style.clone(),
+                s().writing_mode("vertical-rl").top(px(200))
+            ],
+            p!["Frequency 🡒", label_style, s().left(px(220))],
             canvas![
                 el_ref(&model.sound_selector),
-                mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y()))
+                mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y())),
             ],
         ],
         div![
