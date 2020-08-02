@@ -48,6 +48,7 @@ pub struct Model {
     spookiness: f64,
     currently_playing: Vec<Vec<bool>>,
     about: bool,
+    firefox: bool,
 }
 
 impl Model {
@@ -86,6 +87,7 @@ pub enum Msg {
     ChangeSpookiness(f64),
     ResizeCanvas,
     AboutToggle,
+    CloseFirefox,
 }
 fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
     // log!(msg);    // always worth logging the message in development for debug purposes.
@@ -181,6 +183,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::ChangeSpeed(x) => model.speed = x,
         Msg::ChangeSpookiness(x) => model.spookiness = x,
         Msg::AboutToggle => model.about = !model.about,
+        Msg::CloseFirefox => model.firefox = false,
     }
 }
 
@@ -218,6 +221,8 @@ fn set_canvas_size(canvas_el: &web_sys::HtmlCanvasElement) {
 
 fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
     global_styles::global_init();
+
+    is_firefox();
 
     orders
         .subscribe(
@@ -262,6 +267,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         spookiness: 0.18,
         currently_playing: vec![vec![false; 48]; 4],
         about: false,
+        firefox: is_firefox(),
     }
 }
 
@@ -271,6 +277,15 @@ pub fn start() {
     my_app().set(Some(app));
 }
 
+pub fn is_firefox() -> bool {
+    web_sys::window()
+        .unwrap()
+        .navigator()
+        .user_agent()
+        .unwrap()
+        .to_lowercase()
+        .contains("firefox")
+}
 // Provide access to the app incase one wants to force an update from anywhere in the app
 #[atom]
 fn my_app() -> Atom<Option<App<Msg, Model, Node<Msg>>>> {
@@ -302,7 +317,11 @@ pub fn view(model: &Model) -> Node<Msg> {
 
 pub fn app_view(model: &Model) -> Node<Msg> {
     raf_loop::raf_loop_atom().get();
-    let label_style = s().position_absolute().color("black").font_size(em(1.5));
+    let label_style = s()
+        .position_absolute()
+        .color("black")
+        .font_size(em(1.5))
+        .user_select("none");
     div![
         ev(Ev::MouseDown, |_| Msg::GlobalMouseDown),
         ev(Ev::MouseUp, |_| Msg::GlobalMouseUp),
@@ -386,6 +405,18 @@ fn beat_bar<'a>(model: &'a Model) -> impl Fn((usize, (&Rhythm, Vec<bool>))) -> N
             s().display_grid()
                 .grid_template_columns("200px auto")
                 .height(pc(100)),
+            if model.firefox && index == 0 {
+                div![
+
+           s().position_absolute().top(px(60)).text_align_center(),
+            p![
+        "Due to long standing bugs in Firefox we recommend you use a chrome based browser to get the best sounds and experience.\
+         Due to the constraints of a hackathon we where not able to get full browser compatibility. Thank you for understanding :)."
+
+    ], button![s().font_size(em(1.8)),"Close", input_ev(Ev::Click, |_| Msg::CloseFirefox)]]
+            } else {
+                empty!()
+            },
             div![
                 if index == 0 {
                     match raf_loop::raf_loop_atom().get().status {

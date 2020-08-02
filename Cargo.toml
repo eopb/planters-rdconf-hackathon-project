@@ -44,6 +44,7 @@ features = [
     'CanvasRenderingContext2d',
     'Document',
     'Window',
+    'Navigator',
     # "DomTokenList",
     # "AbortController",
     # "AbortSignal",
