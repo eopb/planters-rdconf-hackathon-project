@@ -427,7 +427,7 @@ fn beat_bar<'a>(model: &'a Model) -> impl Fn((usize, (&Rhythm, Vec<bool>))) -> N
                             .border_radius("8px 0 0 8px"),
                         div![
                             s().padding_right(px(4)),
-                            p!["Speed"],
+                            p!["Loop Duration"],
                             input![attrs! {
                                 At::Type => "range",
                                 At::Min => 0,

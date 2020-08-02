@@ -13,6 +13,11 @@ pub fn time_step_advanced(model: &mut Model) {
     trigger_scheduled_sounds(model);
     // remove_expired_sounds(model);
     update_view_data(model);
+
+    if model.current_time_step as f64 > model.speed * 60.0 {
+        crate::raf_loop::raf_loop_atom().update(|raf| raf.stop());
+        crate::raf_loop::raf_loop_atom().update(|raf| raf.start());
+    }
 }
 
 pub fn time_step_loop_stopped(model: &mut Model) {
