@@ -1,6 +1,7 @@
 use seed::prelude::*;
 use seed::*;
 use seed_hooks::*;
+use std::f64::consts::PI;
 use web_sys::OscillatorType;
 
 use seed_style::px; // almost always want seed-style px instead of seed px
@@ -132,7 +133,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
                 .dyn_into::<web_sys::CanvasRenderingContext2d>()
                 .unwrap();
 
-            new_canvas_frame(model, canvas_el, context);
+            new_canvas_frame(model, &canvas_el, context);
             let freq = {
                 let a_note = 440.0;
                 let num_keys = 12.0;
@@ -167,7 +168,14 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
 
         Msg::SelectRow(row) => model.selected_row = row,
         Msg::ResizeCanvas => match &model.sound_selector.get() {
-            Some(x) => set_canvas_size(x),
+            Some(x) => init_canvas(
+                x,
+                &x.get_context("2d")
+                    .unwrap()
+                    .unwrap()
+                    .dyn_into::<web_sys::CanvasRenderingContext2d>()
+                    .unwrap(),
+            ),
             None => {
                 orders.after_next_render(|_| Msg::ResizeCanvas);
             }
@@ -182,13 +190,15 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
 
 fn new_canvas_frame(
     model: &Model,
-    canvas_el: web_sys::HtmlCanvasElement,
+    canvas_el: &web_sys::HtmlCanvasElement,
     ctx: web_sys::CanvasRenderingContext2d,
 ) {
     let width = canvas_el.width() as f64;
     let height = canvas_el.height() as f64;
 
     ctx.clear_rect(0., 0., width, height);
+
+    init_canvas(canvas_el, &ctx);
 
     for (index, (x, y)) in model
         .beat_bars
@@ -200,6 +210,25 @@ fn new_canvas_frame(
         ctx.set_fill_style(&JsValue::from_str(row_colour_dark(index)));
         draw::Rect::crosshair((x, y)).draw(&ctx);
     }
+}
+fn init_canvas(canvas_el: &web_sys::HtmlCanvasElement, ctx: &web_sys::CanvasRenderingContext2d) {
+    set_canvas_size(&canvas_el);
+
+    let width = canvas_el.width() as f64;
+    let height = canvas_el.height() as f64;
+
+    //  context.save();
+    //  context.translate(newx, newy);
+    //  context.rotate(-Math.PI/2);
+    //  context.textAlign = "center";
+    //  context.fillText("Your Label Here", labelXposition, 0);
+    //  context.restore();
+
+    ctx.save();
+    ctx.rotate(PI / 2.0).unwrap();
+    ctx.set_text_align("center");
+    ctx.fill_text("Frequency", width / 2., height / 2.).unwrap();
+    ctx.restore();
 }
 fn set_canvas_size(canvas_el: &web_sys::HtmlCanvasElement) {
     let window = web_sys::window().unwrap();
