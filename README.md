@@ -22,3 +22,12 @@ Adjust the "spookiness" and "speed" to get different effects. (You may need to r
 [Ethan Brierley](https://github.com/ethanboxx)
 
 [Giles](https://github.com/gilescope)
+
+# Building
+
+You can build and run with `cargo make start` or if you don't have cargo-make you can use `docker-compose`.
+
+```
+docker-compose build
+docker-compose up
+```
