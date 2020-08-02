@@ -1,8 +1,8 @@
 use seed::prelude::JsValue;
+use seed::{prelude::*, *};
 use web_sys::OscillatorType;
 use web_sys::{AudioContext, GainNode, OscillatorNode};
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SoundStatus {
     Unplayed,
     Played,
@@ -21,6 +21,7 @@ pub struct Sound {
     context: AudioContext,
     gain: f32,
     freq: f32,
+    pub status: SoundStatus,
     shape: OscillatorType,
 }
 
@@ -47,13 +48,14 @@ impl Sound {
         oscillator.frequency().set_value(freq);
         oscillator.connect_with_audio_node(&gain_node)?;
         oscillator.start()?;
-
+        let status = SoundStatus::Unplayed;
         Ok(Self {
             oscillator,
             gain_node,
             context,
             gain,
             freq,
+            status,
             shape,
         })
     }
@@ -65,6 +67,16 @@ impl Sound {
     }
 
     pub fn gain(mut self, gain: f32) -> Self {
+        log!("pooka");
+        log!(self.status);
+
+        if self.status == SoundStatus::Played {
+            log!("ticka");
+            self.gain_node
+                .gain()
+                .set_target_at_time(self.gain, self.context.current_time(), 0.1)
+                .unwrap();
+        }
         self.gain = gain;
         self
     }
@@ -75,7 +87,8 @@ impl Sound {
         self
     }
 
-    pub fn play(&self, spookiness: f64) {
+    pub fn play(&mut self, spookiness: f64) {
+        self.status = SoundStatus::Played;
         self.context.resume().unwrap(); // Fix for Chromium
         self.gain_node
             .gain()
@@ -83,7 +96,8 @@ impl Sound {
             .unwrap();
     }
 
-    pub fn pause(&self, spookiness: f64) {
+    pub fn pause(&mut self, spookiness: f64) {
+        self.status = SoundStatus::Unplayed;
         self.gain_node
             .gain()
             .set_target_at_time(0.0, self.context.current_time(), spookiness)

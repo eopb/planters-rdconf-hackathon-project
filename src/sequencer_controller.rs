@@ -208,6 +208,4 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
 
         (None, _current, None) => panic!("never should be here!"),
     }
-
-    log!(model.sound_scheduler.schedule);
 }
