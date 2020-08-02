@@ -5,7 +5,7 @@ use seed::{prelude::*, *};
 
 #[derive(Clone, Debug)]
 pub enum SoundSchedulerMsg {
-    AddSound(f64, usize),
+    AddSound(f64, usize, usize),
 }
 
 #[derive(Clone, Debug)]
@@ -16,17 +16,15 @@ pub enum SoundCommand {
 
 pub fn update(msg: SoundSchedulerMsg, mut model: &mut Model) {
     match msg {
-        SoundSchedulerMsg::AddSound(time, row) => {
-            model
-                .sound_scheduler
-                .schedule_sound_at_secs(time, row, SoundCommand::Play)
-        }
+        SoundSchedulerMsg::AddSound(time, row, index) => model
+            .sound_scheduler
+            .schedule_sound_at_secs(time, row, index, SoundCommand::Play),
     }
 }
 
 #[derive(Clone)]
 pub struct SoundScheduler {
-    pub schedule: Vec<(u64, usize, SoundCommand)>,
+    pub schedule: Vec<(u64, usize, usize, SoundCommand)>,
 }
 
 impl Default for SoundScheduler {
@@ -55,7 +53,7 @@ impl SoundScheduler {
                         if this_beat.is_playing() {
                             log!(row_idx);
                             log!(pos);
-                            self.schedule_sound(0, row_idx, SoundCommand::Play);
+                            self.schedule_sound(0, row_idx, pos, SoundCommand::Play);
                         }
                     }
                     (Some(last), beat) => match (last.is_playing(), beat.is_playing()) {
@@ -64,12 +62,14 @@ impl SoundScheduler {
                             self.schedule_sound(
                                 ticks_in_one_bar * (pos as u64),
                                 row_idx,
+                                pos,
                                 SoundCommand::Play,
                             );
                         }
                         (true, false) => self.schedule_sound(
                             ticks_in_one_bar * (pos as u64),
                             row_idx,
+                            pos,
                             SoundCommand::Stop,
                         ),
                         (true, true) => {}
@@ -81,17 +81,23 @@ impl SoundScheduler {
         }
     }
 
-    pub fn schedule_sound_at_secs(&mut self, at_secs: f64, row: usize, cmd: SoundCommand) {
+    pub fn schedule_sound_at_secs(
+        &mut self,
+        at_secs: f64,
+        row: usize,
+        index: usize,
+        cmd: SoundCommand,
+    ) {
         let timestep = (at_secs * 60.0) as u64;
-        self.schedule_sound(timestep, row, cmd);
+        self.schedule_sound(timestep, row, index, cmd);
     }
 
-    pub fn schedule_sound(&mut self, timestep: u64, row: usize, cmd: SoundCommand) {
+    pub fn schedule_sound(&mut self, timestep: u64, row: usize, index: usize, cmd: SoundCommand) {
         let insert = self.schedule.binary_search_by(|s| s.0.cmp(&timestep));
 
         match insert {
-            Ok(idx) => self.schedule.insert(idx, (timestep, row, cmd)),
-            Err(idx) => self.schedule.insert(idx, (timestep, row, cmd)),
+            Ok(idx) => self.schedule.insert(idx, (timestep, row, index, cmd)),
+            Err(idx) => self.schedule.insert(idx, (timestep, row, index, cmd)),
         }
     }
 

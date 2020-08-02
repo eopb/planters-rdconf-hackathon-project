@@ -23,10 +23,11 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 row.bars.get_mut(current).unwrap().on = true;
                 model
                     .sound_scheduler
-                    .schedule_sound(0, row_idx, SoundCommand::Play);
+                    .schedule_sound(0, row_idx, pos_idx, SoundCommand::Play);
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar(),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Stop,
                 );
             }
@@ -34,7 +35,7 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 row.bars.get_mut(current).unwrap().on = true;
                 model
                     .sound_scheduler
-                    .schedule_sound(0, row_idx, SoundCommand::Play);
+                    .schedule_sound(0, row_idx, pos_idx, SoundCommand::Play);
                 model
                     .sound_scheduler
                     .remove_sound(model.ticks_in_one_bar(), row_idx); //removing the existing play at start of next bar
@@ -53,6 +54,7 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar(),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Play,
                 )
             }
@@ -67,11 +69,13 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Play,
                 );
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64 + 1),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Stop,
                 );
             }
@@ -80,6 +84,7 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Play,
                 );
                 model
@@ -106,6 +111,7 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64 + 1),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Play,
                 )
             }
@@ -118,6 +124,7 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64 + 1),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Stop, // and putit back 1 bar
                 );
             }
@@ -136,6 +143,7 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Stop, // insert a stop
                 );
                 model
@@ -148,12 +156,14 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Stop, // insert a stop
                 );
 
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64 + 1),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Play, // insert a stop
                 );
             }
@@ -167,6 +177,7 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Play,
                 );
             }
@@ -189,6 +200,7 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model.sound_scheduler.schedule_sound(
                     model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
+                    pos_idx,
                     SoundCommand::Stop,
                 );
             }
