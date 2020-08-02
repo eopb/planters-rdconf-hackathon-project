@@ -1,6 +1,8 @@
 use crate::rhythm::{Beat, Rhythm};
 use crate::sound::Sound;
 use crate::Model;
+
+#[derive(Clone)]
 pub struct Row {
     pub row: usize,
     pub sound: Sound,
@@ -16,6 +18,7 @@ impl Row {
         }
     }
 }
+#[derive(Clone)]
 pub struct Bar {
     pub row: usize,
     pub pos: usize,

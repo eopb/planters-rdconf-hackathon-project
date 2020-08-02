@@ -4,13 +4,14 @@ use seed_hooks::*;
 use web_sys::OscillatorType;
 
 use seed_style::px; // almost always want seed-style px instead of seed px
-use seed_style::{pc, *};
+use seed_style::{em, pc, *};
 use web_sys::{HtmlCanvasElement, HtmlElement};
 
 mod app;
 mod draw;
 use draw::Draw;
 mod global_styles;
+use raf_loop::LoopStatus;
 mod sound;
 use sound::Sound;
 mod rhythm;
@@ -43,17 +44,22 @@ pub struct Model {
     selected_row: usize,
     mouse_down: bool,
     clicked_beat: Beat,
+    speed: f64,
+    spookiness: f64,
 }
 
 impl Model {
     pub fn secs_elapsed(&self) -> f64 {
         (self.current_time_step as f64) / 60.0
     }
+    pub fn ticks_in_one_bar(&self) -> u64 {
+        ticks_in_one_bar_form_speed(self.speed)
+    }
 }
 
-pub static MAIN_LOOP_DURATION: f64 = 24.0;
-pub static TICKS_IN_ONE_BAR: u64 = ((MAIN_LOOP_DURATION / 48.0) * 60.0) as u64;
-
+pub fn ticks_in_one_bar_form_speed(speed: f64) -> u64 {
+    ((speed / 48.0) * 60.0) as u64
+}
 // In aps that make use of conditional rendering on breakpoints we We just need one Msg
 // in order to handle a WindowResized event.
 #[derive(Clone, Debug)]
@@ -74,6 +80,8 @@ pub enum Msg {
     GlobalMouseDown,
     GlobalMouseUp,
     SelectRow(usize),
+    ChangeSpeed(f64),
+    ChangeSpookiness(f64),
     ResizeCanvas,
 }
 fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -84,10 +92,10 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::TimeStepLoopStarted => main_loop::time_step_loop_started(&mut model),
         Msg::Scheduler(msg) => sound_scheduler::update(msg, &mut model),
         Msg::ProduceSound => {
-            model.sound.play();
+            model.sound.play(model.spookiness);
         }
         Msg::StopSound => {
-            model.sound.pause();
+            model.sound.pause(model.spookiness);
         }
         Msg::Click(x, y) => {
             let (_, pos) = model.beat_bars.get_mut(model.selected_row).unwrap();
@@ -167,6 +175,8 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::NoOp => {}
         Msg::GlobalMouseDown => model.mouse_down = true,
         Msg::GlobalMouseUp => model.mouse_down = false,
+        Msg::ChangeSpeed(x) => model.speed = x,
+        Msg::ChangeSpookiness(x) => model.spookiness = x,
     }
 }
 
@@ -187,7 +197,7 @@ fn new_canvas_frame(
         .enumerate()
         .flat_map(|(index, pos)| pos.map(|pos| (index, pos)))
     {
-        ctx.set_fill_style(&JsValue::from_str(row_colour(index)));
+        ctx.set_fill_style(&JsValue::from_str(row_colour_dark(index)));
         draw::Rect::crosshair((x, y)).draw(&ctx);
     }
 }
@@ -231,7 +241,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         .map(|rhythm| (*rhythm, None))
         .collect();
     let mut scheduler = SoundScheduler::default();
-    scheduler.init_with_rhythm(&default_rhythm);
+    scheduler.init_with_rhythm(ticks_in_one_bar_form_speed(24.0), &default_rhythm);
     let mut vec_of_rows = (0..=5).map(|idx| Row::new(idx)).collect();
     row_and_bars::init_rows_in_model(&mut vec_of_rows, &default_rhythm);
     Model {
@@ -244,6 +254,8 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         selected_row: 0,
         mouse_down: false,
         clicked_beat: Beat::Play,
+        speed: 24.0,
+        spookiness: 0.18,
     }
 }
 
@@ -284,7 +296,7 @@ pub fn view(model: &Model) -> Node<Msg> {
 
 pub fn app_view(model: &Model) -> Node<Msg> {
     raf_loop::raf_loop_atom().get();
-
+    let label_style = s().position_absolute().color("black").font_size(em(1.5));
     div![
         ev(Ev::MouseDown, |_| Msg::GlobalMouseDown),
         ev(Ev::MouseUp, |_| Msg::GlobalMouseUp),
@@ -292,70 +304,146 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             .grid_template_rows("auto 300px")
             .height(pc(100))
             .width(pc(100)),
-        div![canvas![
-            el_ref(&model.sound_selector),
-            mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y()))
-        ],],
+        div![
+            s().position_relative(),
+            button![
+                s().position_absolute()
+                    .color("white")
+                    .background_color("black")
+                    .font_size(em(1.5)),
+                "About"
+            ],
+            p![
+                "🡐 Volume",
+                label_style.clone(),
+                s().writing_mode("vertical-rl").top(px(200))
+            ],
+            p!["Frequency 🡒", label_style, s().left(px(220))],
+            canvas![
+                el_ref(&model.sound_selector),
+                mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y())),
+            ],
+        ],
         div![
             s().height(pc(100)).display_grid(),
-            div![
-                button![
-                    "play",
-                    raf_loop::raf_loop_atom().on_click(|raf| raf.start()),
-                ],
-                button![
-                    "pause",
-                    raf_loop::raf_loop_atom().on_click(|raf| raf.stop()),
-                ],
-                p![
+            {
+                log!(
                     "Current Time:",
                     format!("{:.2}", model.secs_elapsed()),
                     ", Current Time step:",
                     model.current_time_step
-                ]
-            ],
+                );
+                empty()
+            },
             model
                 .beat_bars
                 .iter()
                 .map(|x| &x.0)
                 .enumerate()
-                .map(beat_bar)
+                .map(beat_bar(&model))
                 .collect::<Vec<Node<Msg>>>()
         ],
     ]
 }
 
-fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
-    div![
-        s().display_grid()
-            .grid_template_columns("200px auto")
-            .height(pc(100)),
-        div![
-            s().background_color(row_colour(index))
-                .display_flex()
-                .justify_content_center()
-                .align_items_center(),
-            button![
-                "Select this rhythm",
-                input_ev(Ev::Click, move |_| Msg::SelectRow(index))
-            ]
-        ],
+fn beat_bar<'a>(model: &'a Model) -> impl Fn((usize, &Rhythm)) -> Node<Msg> + 'a {
+    move |(index, bar_data)| {
+        let play_style = s()
+            .position_absolute()
+            .height(px(50))
+            .top(px(-50))
+            .right(px(0))
+            .font_size(em(2.6));
         div![
             s().display_grid()
-                .grid_auto_flow("column")
-                .width(pc(100))
-                .margin_top(px(20))
-                .margin_bottom(px(20))
-                .user_select("none"),
-            bar_data
-                .0
-                .iter()
-                .zip(bar_data.neighbours())
-                .enumerate()
-                .map(beat_bar_box(index))
-                .collect::<Vec<Node<Msg>>>()
-        ],
-    ]
+                .grid_template_columns("200px auto")
+                .height(pc(100)),
+            div![
+                if index == 0 {
+                    match raf_loop::raf_loop_atom().get().status {
+                        LoopStatus::Stopped => button![
+                            "▶️",
+                            raf_loop::raf_loop_atom().on_click(|raf| raf.start()),
+                            play_style
+                        ],
+                        LoopStatus::Running => button![
+                            "▌▌",
+                            raf_loop::raf_loop_atom().on_click(|raf| raf.stop()),
+                            play_style,
+                            s().font_size(em(1.6)),
+                        ],
+                    }
+                } else {
+                    empty()
+                },
+                s().background_color(row_colour(index))
+                    .display_flex()
+                    .justify_content_center()
+                    .align_items_center()
+                    .position_relative(),
+                button![
+                    "Select this rhythm",
+                    input_ev(Ev::Click, move |_| Msg::SelectRow(index))
+                ]
+            ],
+            div![
+                if index == 0 {
+                    div![
+                        s().display_flex()
+                            .height(px(40))
+                            .position_absolute()
+                            .top(px(-67))
+                            .right(px(0))
+                            .background_color("#EEE")
+                            .padding(px(5))
+                            .border_radius("8px 0 0 8px"),
+                        div![
+                            s().padding_right(px(4)),
+                            p!["Speed"],
+                            input![attrs! {
+                                At::Type => "range",
+                                At::Min => 0,
+                                At::Max => 60,
+                                At::Step => "any",
+                                At::Value => model.speed,
+                            }],
+                            input_ev(Ev::Input, |x| Msg::ChangeSpeed(x.parse().unwrap()))
+                        ],
+                        div![
+                            p!["Spooky"],
+                            input![
+                                attrs! {
+                                    At::Type => "range",
+                                    At::Value => 0,
+                                    At::Min => 0.1,
+                                    At::Max => 0.5,
+                                    At::Step => "any",
+                                    At::Value => model.spookiness,
+                                },
+                                input_ev(Ev::Input, |x| Msg::ChangeSpookiness(x.parse().unwrap()))
+                            ]
+                        ]
+                    ]
+                } else {
+                    empty()
+                },
+                s().display_grid()
+                    .grid_auto_flow("column")
+                    .width(pc(100))
+                    .margin_top(px(20))
+                    .margin_bottom(px(20))
+                    .position_relative()
+                    .user_select("none"),
+                bar_data
+                    .0
+                    .iter()
+                    .zip(bar_data.neighbours())
+                    .enumerate()
+                    .map(beat_bar_box(index))
+                    .collect::<Vec<Node<Msg>>>()
+            ],
+        ]
+    }
 }
 
 fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg> {
