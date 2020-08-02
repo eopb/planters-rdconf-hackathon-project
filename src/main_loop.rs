@@ -16,7 +16,7 @@ pub fn time_step_advanced(model: &mut Model) {
 pub fn time_step_loop_stopped(model: &mut Model) {
     model.current_time_step = 0;
     for row in &model.rows {
-        row.sound.pause()
+        row.sound.pause(model.spookiness)
     }
 }
 
@@ -33,8 +33,8 @@ fn trigger_scheduled_sounds(model: &mut Model) {
         if *ts == model.current_time_step {
             if let Some(row) = model.rows.get(*row) {
                 match cmd {
-                    SoundCommand::Play => row.sound.play(),
-                    SoundCommand::Stop => row.sound.pause(),
+                    SoundCommand::Play => row.sound.play(model.spookiness),
+                    SoundCommand::Stop => row.sound.pause(model.spookiness),
                 }
             }
         }

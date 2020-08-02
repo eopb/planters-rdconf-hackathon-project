@@ -45,6 +45,7 @@ pub struct Model {
     mouse_down: bool,
     clicked_beat: Beat,
     speed: f64,
+    spookiness: f64,
 }
 
 impl Model {
@@ -80,6 +81,7 @@ pub enum Msg {
     GlobalMouseUp,
     SelectRow(usize),
     ChangeSpeed(f64),
+    ChangeSpookiness(f64),
     ResizeCanvas,
 }
 fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
@@ -90,10 +92,10 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::TimeStepLoopStarted => main_loop::time_step_loop_started(&mut model),
         Msg::Scheduler(msg) => sound_scheduler::update(msg, &mut model),
         Msg::ProduceSound => {
-            model.sound.play();
+            model.sound.play(model.spookiness);
         }
         Msg::StopSound => {
-            model.sound.pause();
+            model.sound.pause(model.spookiness);
         }
         Msg::Click(x, y) => {
             let (_, pos) = model.beat_bars.get_mut(model.selected_row).unwrap();
@@ -174,6 +176,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::GlobalMouseDown => model.mouse_down = true,
         Msg::GlobalMouseUp => model.mouse_down = false,
         Msg::ChangeSpeed(x) => model.speed = x,
+        Msg::ChangeSpookiness(x) => model.spookiness = x,
     }
 }
 
@@ -252,6 +255,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         mouse_down: false,
         clicked_beat: Beat::Play,
         speed: 24.0,
+        spookiness: 0.3,
     }
 }
 
@@ -400,13 +404,17 @@ fn beat_bar<'a>(model: &'a Model) -> impl Fn((usize, &Rhythm)) -> Node<Msg> + 'a
                         ],
                         div![
                             p!["Spooky"],
-                            input![attrs! {
-                                At::Type => "range",
-                                At::Value => 0,
-                                At::Min => 0,
-                                At::Max => 10 ,
-                                At::Step => "any",
-                            }]
+                            input![
+                                attrs! {
+                                    At::Type => "range",
+                                    At::Value => 0,
+                                    At::Min => 0.1,
+                                    At::Max => 0.5,
+                                    At::Step => "any",
+                                    At::Value => model.spookiness,
+                                },
+                                input_ev(Ev::Input, |x| Msg::ChangeSpookiness(x.parse().unwrap()))
+                            ]
                         ]
                     ]
                 } else {
