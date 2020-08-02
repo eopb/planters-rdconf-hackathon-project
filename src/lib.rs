@@ -255,7 +255,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         mouse_down: false,
         clicked_beat: Beat::Play,
         speed: 24.0,
-        spookiness: 0.3,
+        spookiness: 0.18,
     }
 }
 
