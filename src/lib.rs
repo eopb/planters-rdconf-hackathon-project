@@ -335,7 +335,7 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             } else {
                 nodes![
                     p![
-                        "Volume 🡒",
+                        "🡐 Volume",
                         label_style.clone(),
                         s().writing_mode("vertical-rl").top(px(200))
                     ],
