@@ -47,6 +47,7 @@ pub struct Model {
     speed: f64,
     spookiness: f64,
     currently_playing: Vec<Vec<bool>>,
+    about: bool,
 }
 
 impl Model {
@@ -84,6 +85,7 @@ pub enum Msg {
     ChangeSpeed(f64),
     ChangeSpookiness(f64),
     ResizeCanvas,
+    AboutToggle,
 }
 fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
     // log!(msg);    // always worth logging the message in development for debug purposes.
@@ -178,6 +180,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
         Msg::GlobalMouseUp => model.mouse_down = false,
         Msg::ChangeSpeed(x) => model.speed = x,
         Msg::ChangeSpookiness(x) => model.spookiness = x,
+        Msg::AboutToggle => model.about = !model.about,
     }
 }
 
@@ -258,6 +261,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         speed: 24.0,
         spookiness: 0.18,
         currently_playing: vec![vec![false; 48]; 4],
+        about: false,
     }
 }
 
@@ -302,10 +306,14 @@ pub fn app_view(model: &Model) -> Node<Msg> {
     div![
         ev(Ev::MouseDown, |_| Msg::GlobalMouseDown),
         ev(Ev::MouseUp, |_| Msg::GlobalMouseUp),
-        s().display_grid()
-            .grid_template_rows("auto 300px")
-            .height(pc(100))
-            .width(pc(100)),
+        if !model.about {
+            s().display_grid()
+                .grid_template_rows("auto 300px")
+                .height(pc(100))
+                .width(pc(100))
+        } else {
+            s()
+        },
         div![
             s().position_relative(),
             button![
@@ -313,39 +321,56 @@ pub fn app_view(model: &Model) -> Node<Msg> {
                     .color("white")
                     .background_color("black")
                     .font_size(em(1.5)),
+                input_ev(Ev::Click, |_| Msg::AboutToggle),
                 "About"
             ],
-            p![
-                "🡐 Volume",
-                label_style.clone(),
-                s().writing_mode("vertical-rl").top(px(200))
-            ],
-            p!["Frequency 🡒", label_style, s().left(px(220))],
-            canvas![
-                el_ref(&model.sound_selector),
-                mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y())),
-            ],
-        ],
-        div![
-            s().height(pc(100)).display_grid(),
-            {
-                log!(
-                    "Current Time:",
-                    format!("{:.2}", model.secs_elapsed()),
-                    ", Current Time step:",
-                    model.current_time_step
-                );
-                empty()
+            if model.about {
+                vec![div![
+                    s().padding_top(px(60)).padding_left(px(6)),
+                    attrs! {
+                        At::Id => "md",
+                    },
+                    Node::from_markdown(include_str!("../README.md")),
+                ]]
+            } else {
+                nodes![
+                    p![
+                        "🡐 Volume",
+                        label_style.clone(),
+                        s().writing_mode("vertical-rl").top(px(200))
+                    ],
+                    p!["Frequency 🡒", label_style, s().left(px(220))],
+                    canvas![
+                        el_ref(&model.sound_selector),
+                        mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y())),
+                    ],
+                ]
             },
-            model
-                .beat_bars
-                .iter()
-                .map(|x| &x.0)
-                .zip(model.currently_playing.clone())
-                .enumerate()
-                .map(beat_bar(&model))
-                .collect::<Vec<Node<Msg>>>()
         ],
+        if !model.about {
+            div![
+                s().height(pc(100)).display_grid(),
+                {
+                    log!(
+                        "Current Time:",
+                        format!("{:.2}", model.secs_elapsed()),
+                        ", Current Time step:",
+                        model.current_time_step
+                    );
+                    empty()
+                },
+                model
+                    .beat_bars
+                    .iter()
+                    .map(|x| &x.0)
+                    .zip(model.currently_playing.clone())
+                    .enumerate()
+                    .map(beat_bar(&model))
+                    .collect::<Vec<Node<Msg>>>()
+            ]
+        } else {
+            empty()
+        },
     ]
 }
 
