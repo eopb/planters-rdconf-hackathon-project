@@ -4,13 +4,14 @@ use seed_hooks::*;
 use web_sys::OscillatorType;
 
 use seed_style::px; // almost always want seed-style px instead of seed px
-use seed_style::{pc, *};
+use seed_style::{em, pc, *};
 use web_sys::{HtmlCanvasElement, HtmlElement};
 
 mod app;
 mod draw;
 use draw::Draw;
 mod global_styles;
+use raf_loop::LoopStatus;
 mod sound;
 use sound::Sound;
 mod rhythm;
@@ -307,14 +308,15 @@ pub fn app_view(model: &Model) -> Node<Msg> {
         div![
             s().height(pc(100)).display_grid(),
             div![
-                button![
-                    "play",
-                    raf_loop::raf_loop_atom().on_click(|raf| raf.start()),
-                ],
-                button![
-                    "pause",
-                    raf_loop::raf_loop_atom().on_click(|raf| raf.stop()),
-                ],
+                match raf_loop::raf_loop_atom().get().status {
+                    LoopStatus::Stopped =>
+                        button!["▶️", raf_loop::raf_loop_atom().on_click(|raf| raf.start()),],
+                    LoopStatus::Running => button![
+                        "▌▌",
+                        raf_loop::raf_loop_atom().on_click(|raf| raf.stop()),
+                        s().font_size(em(0.9))
+                    ],
+                },
                 p![
                     "Current Time:",
                     format!("{:.2}", model.secs_elapsed()),
