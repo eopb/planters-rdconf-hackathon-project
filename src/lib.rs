@@ -292,10 +292,18 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             .grid_template_rows("auto 300px")
             .height(pc(100))
             .width(pc(100)),
-        div![canvas![
-            el_ref(&model.sound_selector),
-            mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y()))
-        ],],
+        div![
+            button![
+                s().position_absolute()
+                    .color("white")
+                    .background_color("black"),
+                "About"
+            ],
+            canvas![
+                el_ref(&model.sound_selector),
+                mouse_ev(Ev::MouseDown, |event| Msg::Click(event.x(), event.y()))
+            ],
+        ],
         div![
             s().height(pc(100)).display_grid(),
             div![
