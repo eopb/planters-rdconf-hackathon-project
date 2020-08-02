@@ -72,7 +72,14 @@ impl SoundScheduler {
                             pos,
                             SoundCommand::Stop,
                         ),
-                        (true, true) => {}
+                        (true, true) => {
+                            self.schedule_sound(
+                                ticks_in_one_bar * (pos as u64),
+                                row_idx,
+                                pos,
+                                SoundCommand::Play,
+                            );
+                        }
                     },
                 }
                 last_beat = Some(beat);
