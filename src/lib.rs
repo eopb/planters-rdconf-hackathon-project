@@ -486,11 +486,9 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, ((&Beat, Neighbours), bool))) -> 
             s().background_color(match beat {
                 Beat::Play => row_colour_dark(row),
                 Beat::Pause => "#FFF",
-            })
-            .user_select("none")
-            .transition("0.05s"),
+            }),
             if status {
-                s().filter("blur(2px)").transform("scale(1.4)")
+                s().background_color("black")
             } else {
                 s()
             },
