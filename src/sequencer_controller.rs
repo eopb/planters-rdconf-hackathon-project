@@ -1,5 +1,5 @@
 use crate::sound_scheduler::SoundCommand;
-use crate::{Model, TICKS_IN_ONE_BAR};
+use crate::Model;
 use seed::*;
 
 pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
@@ -24,9 +24,11 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 model
                     .sound_scheduler
                     .schedule_sound(0, row_idx, SoundCommand::Play);
-                model
-                    .sound_scheduler
-                    .schedule_sound(TICKS_IN_ONE_BAR, row_idx, SoundCommand::Stop);
+                model.sound_scheduler.schedule_sound(
+                    model.ticks_in_one_bar(),
+                    row_idx,
+                    SoundCommand::Stop,
+                );
             }
             (false, true) => {
                 row.bars.get_mut(current).unwrap().on = true;
@@ -35,22 +37,24 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                     .schedule_sound(0, row_idx, SoundCommand::Play);
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR, row_idx); //removing the existing play at start of next bar
+                    .remove_sound(model.ticks_in_one_bar(), row_idx); //removing the existing play at start of next bar
             }
             (true, false) => {
                 row.bars.get_mut(current).unwrap().on = false;
                 model.sound_scheduler.remove_sound(0, row_idx); // remove eixsting play at start of 0th bar
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR, row_idx); // remove eixsting stop at start of 1st bar
+                    .remove_sound(model.ticks_in_one_bar(), row_idx); // remove eixsting stop at start of 1st bar
             }
             (true, true) => {
                 row.bars.get_mut(current).unwrap().on = false;
                 model.sound_scheduler.remove_sound(0, row_idx); // remove eixsting play
 
-                model
-                    .sound_scheduler
-                    .schedule_sound(TICKS_IN_ONE_BAR, row_idx, SoundCommand::Play)
+                model.sound_scheduler.schedule_sound(
+                    model.ticks_in_one_bar(),
+                    row_idx,
+                    SoundCommand::Play,
+                )
             }
         },
         (Some(prev), current, Some(next)) => match (
@@ -61,12 +65,12 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
             (false, false, false) => {
                 row.bars.get_mut(current).unwrap().on = true;
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64),
+                    model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
                     SoundCommand::Play,
                 );
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64 + 1),
+                    model.ticks_in_one_bar() * (pos_idx as u64 + 1),
                     row_idx,
                     SoundCommand::Stop,
                 );
@@ -74,33 +78,33 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
             (false, false, true) => {
                 row.bars.get_mut(current).unwrap().on = true;
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64),
+                    model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
                     SoundCommand::Play,
                 );
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64 + 1), row_idx);
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64 + 1), row_idx);
                 //removing the existing play at start of next bar
             }
             (false, true, false) => {
                 row.bars.get_mut(current).unwrap().on = false;
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64), row_idx); // remove eixsting play at start of 0th bar
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64), row_idx); // remove eixsting play at start of 0th bar
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64 + 1), row_idx);
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64 + 1), row_idx);
                 // remove eixsting stop at start of 1st bar
             }
             (false, true, true) => {
                 row.bars.get_mut(current).unwrap().on = false;
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64), row_idx); // remove eixsting play
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64), row_idx); // remove eixsting play
 
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64 + 1),
+                    model.ticks_in_one_bar() * (pos_idx as u64 + 1),
                     row_idx,
                     SoundCommand::Play,
                 )
@@ -110,9 +114,9 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 row.bars.get_mut(current).unwrap().on = true;
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64), row_idx); // remove the stop
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64), row_idx); // remove the stop
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64 + 1),
+                    model.ticks_in_one_bar() * (pos_idx as u64 + 1),
                     row_idx,
                     SoundCommand::Stop, // and putit back 1 bar
                 );
@@ -121,34 +125,34 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 row.bars.get_mut(current).unwrap().on = true;
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64), row_idx); // remove the stop
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64), row_idx); // remove the stop
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64 + 1), row_idx);
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64 + 1), row_idx);
                 // remove the start
             }
             (true, true, false) => {
                 row.bars.get_mut(current).unwrap().on = false;
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64),
+                    model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
                     SoundCommand::Stop, // insert a stop
                 );
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64 + 1), row_idx);
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64 + 1), row_idx);
                 // remove he other stop
             }
             (true, true, true) => {
                 row.bars.get_mut(current).unwrap().on = false;
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64),
+                    model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
                     SoundCommand::Stop, // insert a stop
                 );
 
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64 + 1),
+                    model.ticks_in_one_bar() * (pos_idx as u64 + 1),
                     row_idx,
                     SoundCommand::Play, // insert a stop
                 );
@@ -161,7 +165,7 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
             (false, false) => {
                 row.bars.get_mut(current).unwrap().on = true;
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64),
+                    model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
                     SoundCommand::Play,
                 );
@@ -170,20 +174,20 @@ pub fn bar_toggled(model: &mut Model, row_idx: usize, pos_idx: usize) {
                 row.bars.get_mut(current).unwrap().on = false;
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64), row_idx);
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64), row_idx);
                 // remove the start
             }
             (true, false) => {
                 row.bars.get_mut(current).unwrap().on = true;
                 model
                     .sound_scheduler
-                    .remove_sound(TICKS_IN_ONE_BAR * (pos_idx as u64), row_idx);
+                    .remove_sound(model.ticks_in_one_bar() * (pos_idx as u64), row_idx);
                 // remove the stop
             }
             (true, true) => {
                 row.bars.get_mut(current).unwrap().on = false;
                 model.sound_scheduler.schedule_sound(
-                    TICKS_IN_ONE_BAR * (pos_idx as u64),
+                    model.ticks_in_one_bar() * (pos_idx as u64),
                     row_idx,
                     SoundCommand::Stop,
                 );

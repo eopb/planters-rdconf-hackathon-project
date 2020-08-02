@@ -1,7 +1,6 @@
 use crate::rhythm::{Beat, Rhythm};
 use crate::Model;
 use crate::Sound;
-use crate::TICKS_IN_ONE_BAR;
 use seed::{prelude::*, *};
 
 #[derive(Clone, Debug)]
@@ -25,6 +24,7 @@ pub fn update(msg: SoundSchedulerMsg, mut model: &mut Model) {
     }
 }
 
+#[derive(Clone)]
 pub struct SoundScheduler {
     pub schedule: Vec<(u64, usize, SoundCommand)>,
 }
@@ -40,6 +40,7 @@ impl SoundScheduler {
 
     pub fn init_with_rhythm(
         &mut self,
+        ticks_in_one_bar: u64,
         rs: &Vec<(
             Rhythm,
             // Where the rhythm is attached to the canvas
@@ -61,13 +62,13 @@ impl SoundScheduler {
                         (false, false) => {}
                         (false, true) => {
                             self.schedule_sound(
-                                TICKS_IN_ONE_BAR * (pos as u64),
+                                ticks_in_one_bar * (pos as u64),
                                 row_idx,
                                 SoundCommand::Play,
                             );
                         }
                         (true, false) => self.schedule_sound(
-                            TICKS_IN_ONE_BAR * (pos as u64),
+                            ticks_in_one_bar * (pos as u64),
                             row_idx,
                             SoundCommand::Stop,
                         ),
