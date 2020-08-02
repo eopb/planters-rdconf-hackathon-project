@@ -51,7 +51,7 @@ impl Model {
     }
 }
 
-pub static MAIN_LOOP_DURATION: f64 = 48.0;
+pub static MAIN_LOOP_DURATION: f64 = 24.0;
 pub static TICKS_IN_ONE_BAR: u64 = ((MAIN_LOOP_DURATION / 48.0) * 60.0) as u64;
 
 // In aps that make use of conditional rendering on breakpoints we We just need one Msg
