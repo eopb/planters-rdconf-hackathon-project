@@ -1,5 +1,7 @@
 use crate::sound_scheduler::SoundCommand;
 use crate::Model;
+use crate::Msg;
+use seed::app::Orders;
 use seed::*;
 
 // occurs deterministically every timestep
@@ -29,12 +31,25 @@ fn advance_time_step_counter(model: &mut Model) {
 }
 
 fn trigger_scheduled_sounds(model: &mut Model) {
-    for (ts, row, cmd) in model.sound_scheduler.schedule.iter_mut() {
+    for (ts, row, index, cmd) in model.sound_scheduler.schedule.iter_mut() {
         if *ts == model.current_time_step {
-            if let Some(row) = model.rows.get(*row) {
+            if let Some(row_data) = model.rows.get(*row) {
+                log(cmd.clone());
+
                 match cmd {
-                    SoundCommand::Play => row.sound.play(model.spookiness),
-                    SoundCommand::Stop => row.sound.pause(model.spookiness),
+                    SoundCommand::Play => {
+                        *model
+                            .currently_playing
+                            .get_mut(*row)
+                            .unwrap()
+                            .get_mut(*index)
+                            .unwrap() = true
+                    }
+                    SoundCommand::Stop => (model.currently_playing) = vec![vec![false; 48]; 4],
+                }
+                match cmd {
+                    SoundCommand::Play => row_data.sound.play(model.spookiness),
+                    SoundCommand::Stop => row_data.sound.pause(model.spookiness),
                 }
             }
         }

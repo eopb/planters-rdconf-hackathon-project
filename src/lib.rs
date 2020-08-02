@@ -46,6 +46,7 @@ pub struct Model {
     clicked_beat: Beat,
     speed: f64,
     spookiness: f64,
+    currently_playing: Vec<Vec<bool>>,
 }
 
 impl Model {
@@ -256,6 +257,7 @@ fn init(url: Url, orders: &mut impl Orders<Msg>) -> Model {
         clicked_beat: Beat::Play,
         speed: 24.0,
         spookiness: 0.18,
+        currently_playing: vec![vec![false; 48]; 4],
     }
 }
 
@@ -339,6 +341,7 @@ pub fn app_view(model: &Model) -> Node<Msg> {
                 .beat_bars
                 .iter()
                 .map(|x| &x.0)
+                .zip(model.currently_playing.clone())
                 .enumerate()
                 .map(beat_bar(&model))
                 .collect::<Vec<Node<Msg>>>()
@@ -346,8 +349,8 @@ pub fn app_view(model: &Model) -> Node<Msg> {
     ]
 }
 
-fn beat_bar<'a>(model: &'a Model) -> impl Fn((usize, &Rhythm)) -> Node<Msg> + 'a {
-    move |(index, bar_data)| {
+fn beat_bar<'a>(model: &'a Model) -> impl Fn((usize, (&Rhythm, Vec<bool>))) -> Node<Msg> + 'a {
+    move |(index, (bar_data, status))| {
         let play_style = s()
             .position_absolute()
             .height(px(50))
@@ -438,6 +441,7 @@ fn beat_bar<'a>(model: &'a Model) -> impl Fn((usize, &Rhythm)) -> Node<Msg> + 'a
                     .0
                     .iter()
                     .zip(bar_data.neighbours())
+                    .zip(status)
                     .enumerate()
                     .map(beat_bar_box(index))
                     .collect::<Vec<Node<Msg>>>()
@@ -446,8 +450,8 @@ fn beat_bar<'a>(model: &'a Model) -> impl Fn((usize, &Rhythm)) -> Node<Msg> + 'a
     }
 }
 
-fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg> {
-    move |(index, (beat, mut neighbours))| {
+fn beat_bar_box(row: usize) -> impl Fn((usize, ((&Beat, Neighbours), bool))) -> Node<Msg> {
+    move |(index, ((beat, mut neighbours), status))| {
         if index == 0 {
             neighbours.left = true
         } else if index == 47 {
@@ -458,7 +462,13 @@ fn beat_bar_box(row: usize) -> impl Fn((usize, (&Beat, Neighbours))) -> Node<Msg
                 Beat::Play => row_colour_dark(row),
                 Beat::Pause => "#FFF",
             })
-            .user_select("none"),
+            .user_select("none")
+            .transition("0.05s"),
+            if status {
+                s().filter("blur(2px)").transform("scale(1.4)")
+            } else {
+                s()
+            },
             match neighbours {
                 Neighbours {
                     left: true,
