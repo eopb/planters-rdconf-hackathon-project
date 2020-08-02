@@ -390,7 +390,7 @@ fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
                         }]
                     ],
                     div![
-                        p!["Spookiness"],
+                        p!["Spooky"],
                         input![attrs! {
                             At::Type => "range",
                             At::Value => 0,
