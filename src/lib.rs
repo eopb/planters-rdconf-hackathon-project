@@ -307,23 +307,15 @@ pub fn app_view(model: &Model) -> Node<Msg> {
         ],
         div![
             s().height(pc(100)).display_grid(),
-            div![
-                match raf_loop::raf_loop_atom().get().status {
-                    LoopStatus::Stopped =>
-                        button!["▶️", raf_loop::raf_loop_atom().on_click(|raf| raf.start()),],
-                    LoopStatus::Running => button![
-                        "▌▌",
-                        raf_loop::raf_loop_atom().on_click(|raf| raf.stop()),
-                        s().font_size(em(0.9))
-                    ],
-                },
-                p![
+            {
+                log!(
                     "Current Time:",
                     format!("{:.2}", model.secs_elapsed()),
                     ", Current Time step:",
                     model.current_time_step
-                ]
-            ],
+                );
+                empty()
+            },
             model
                 .beat_bars
                 .iter()
@@ -336,15 +328,39 @@ pub fn app_view(model: &Model) -> Node<Msg> {
 }
 
 fn beat_bar((index, bar_data): (usize, &Rhythm)) -> Node<Msg> {
+    let play_style = s()
+        .position_absolute()
+        .height(px(50))
+        .top(px(-50))
+        .right(px(0))
+        .font_size(em(2.6));
     div![
         s().display_grid()
             .grid_template_columns("200px auto")
             .height(pc(100)),
         div![
+            if index == 0 {
+                match raf_loop::raf_loop_atom().get().status {
+                    LoopStatus::Stopped => button![
+                        "▶️",
+                        raf_loop::raf_loop_atom().on_click(|raf| raf.start()),
+                        play_style
+                    ],
+                    LoopStatus::Running => button![
+                        "▌▌",
+                        raf_loop::raf_loop_atom().on_click(|raf| raf.stop()),
+                        play_style,
+                        s().font_size(em(1.6)),
+                    ],
+                }
+            } else {
+                empty()
+            },
             s().background_color(row_colour(index))
                 .display_flex()
                 .justify_content_center()
-                .align_items_center(),
+                .align_items_center()
+                .position_relative(),
             button![
                 "Select this rhythm",
                 input_ev(Ev::Click, move |_| Msg::SelectRow(index))
