@@ -143,7 +143,7 @@ fn update(msg: Msg, mut model: &mut Model, orders: &mut impl Orders<Msg>) {
                 let nearest_key = ((scaled / a_note).log2() * num_keys).floor();
                 a_note * 2.0f32.powf(nearest_key / num_keys)
             };
-            let vol = (relative_pos_y as f32 * 10. / height) as f32;
+            let vol = ((height as f32 - relative_pos_y as f32) as f32 * 10. / height) as f32;
 
             if let Some(selected_row) = model.rows.get_mut(model.selected_row) {
                 selected_row.sound = selected_row.sound.clone().gain(vol).freq(freq);
@@ -351,12 +351,12 @@ pub fn app_view(model: &Model) -> Node<Msg> {
             div![
                 s().height(pc(100)).display_grid(),
                 {
-                    log!(
-                        "Current Time:",
-                        format!("{:.2}", model.secs_elapsed()),
-                        ", Current Time step:",
-                        model.current_time_step
-                    );
+                    // log!(
+                    //     "Current Time:",
+                    //     format!("{:.2}", model.secs_elapsed()),
+                    //     ", Current Time step:",t
+                    //     model.current_time_step
+                    // );
                     empty()
                 },
                 model

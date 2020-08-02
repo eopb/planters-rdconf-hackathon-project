@@ -51,8 +51,8 @@ impl SoundScheduler {
                 match (last_beat, beat) {
                     (None, this_beat) => {
                         if this_beat.is_playing() {
-                            log!(row_idx);
-                            log!(pos);
+                            // log!(row_idx);
+                            // log!(pos);
                             self.schedule_sound(0, row_idx, pos, SoundCommand::Play);
                         }
                     }
