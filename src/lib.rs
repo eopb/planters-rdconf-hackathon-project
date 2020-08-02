@@ -197,7 +197,7 @@ fn new_canvas_frame(
         .enumerate()
         .flat_map(|(index, pos)| pos.map(|pos| (index, pos)))
     {
-        ctx.set_fill_style(&JsValue::from_str(row_colour(index)));
+        ctx.set_fill_style(&JsValue::from_str(row_colour_dark(index)));
         draw::Rect::crosshair((x, y)).draw(&ctx);
     }
 }
